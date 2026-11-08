@@ -16,7 +16,28 @@ export default function RootLayout() {
             backgroundColor: colors.background,
           },
         }}
-      />
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="criar-conta" />
+        <Stack.Screen name="(tabs)" />
+
+        <Stack.Screen
+          name="cadastrar-pessoa"
+          options={{
+            headerShown: true,
+            title: "Cadastrar pessoa",
+            headerStyle: {
+              backgroundColor: colors.background,
+            },
+            headerTintColor: colors.primary,
+            headerTitleStyle: {
+              color: colors.text,
+            },
+            headerShadowVisible: false,
+          }}
+        />
+      </Stack>
     </SafeAreaProvider>
   );
 }
