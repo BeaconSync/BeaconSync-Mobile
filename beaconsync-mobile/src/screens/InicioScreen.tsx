@@ -1,14 +1,77 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import CardPessoa from "../components/CardPessoa";
 import { colors } from "../theme/colors";
+import type { EstadoAlertas } from "../types/alerta";
+import type { EstadoPessoas, PessoaResumo } from "../types/pessoa";
 
 type InicioScreenProps = {
   nomeUsuario?: string;
+  estadoPessoas?: EstadoPessoas;
+  estadoAlertas?: EstadoAlertas;
+  demonstracao?: boolean;
+  onAbrirPerfil: () => void;
+  onAbrirPessoas: () => void;
+  onCadastrarPessoa: () => void;
+  onAbrirPessoa: (pessoa: PessoaResumo) => void;
+  onAbrirAlertas: () => void;
+  onAbrirMinhasSolicitacoes: () => void;
+  onAbrirSolicitacoesRecebidas: () => void;
 };
+
+type BotaoProps = {
+  titulo: string;
+  onPress: () => void;
+  secundario?: boolean;
+};
+
+function Botao({
+  titulo,
+  onPress,
+  secundario = false,
+}: BotaoProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [
+        styles.button,
+        secundario && styles.secondaryButton,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Text
+        style={[
+          styles.buttonText,
+          secundario && styles.secondaryButtonText,
+        ]}
+      >
+        {titulo}
+      </Text>
+    </Pressable>
+  );
+}
 
 export default function InicioScreen({
   nomeUsuario,
+  estadoPessoas = { status: "indisponivel" },
+  estadoAlertas = { status: "indisponivel" },
+  demonstracao = false,
+  onAbrirPerfil,
+  onAbrirPessoas,
+  onCadastrarPessoa,
+  onAbrirPessoa,
+  onAbrirAlertas,
+  onAbrirMinhasSolicitacoes,
+  onAbrirSolicitacoesRecebidas,
 }: InicioScreenProps) {
   const nome = nomeUsuario?.trim();
   const primeiroNome = nome?.split(/\s+/)[0];
@@ -22,8 +85,64 @@ export default function InicioScreen({
         .toUpperCase()
     : "—";
 
+  const pessoas =
+    estadoPessoas.status === "sucesso"
+      ? estadoPessoas.pessoas
+      : [];
+
+  const alertasAtivos =
+    estadoAlertas.status === "sucesso"
+      ? estadoAlertas.alertas.filter(
+          (alerta) => alerta.status === "ativo"
+        )
+      : [];
+
+  const primeiroAlerta = alertasAtivos[0];
+  const temAlertaAtivo = alertasAtivos.length > 0;
+
+  let tituloAlertas = "Áreas acompanhadas";
+  let descricaoAlertas =
+    "As informações sobre alertas ainda não estão disponíveis.";
+
+  if (estadoAlertas.status === "carregando") {
+    tituloAlertas = "Consultando alertas";
+    descricaoAlertas = "Aguarde enquanto buscamos os avisos.";
+  } else if (estadoAlertas.status === "erro") {
+    tituloAlertas = "Não foi possível consultar os alertas";
+    descricaoAlertas = estadoAlertas.mensagem;
+  } else if (estadoAlertas.status === "sucesso") {
+    if (primeiroAlerta) {
+      tituloAlertas = primeiroAlerta.titulo;
+      descricaoAlertas = primeiroAlerta.area
+        ? `Área informada: ${primeiroAlerta.area}`
+        : primeiroAlerta.descricao;
+    } else {
+      descricaoAlertas =
+        "Nenhum alerta ativo retornado para as áreas acompanhadas.";
+    }
+  }
+
+  let tituloPessoas = "Informações indisponíveis";
+  let descricaoPessoas =
+    "Ainda não foi possível consultar as pessoas que você acompanha.";
+
+  if (estadoPessoas.status === "carregando") {
+    tituloPessoas = "Carregando pessoas";
+    descricaoPessoas = "Aguarde enquanto buscamos os cadastros.";
+  } else if (estadoPessoas.status === "erro") {
+    tituloPessoas = "Não foi possível carregar";
+    descricaoPessoas = estadoPessoas.mensagem;
+  } else if (estadoPessoas.status === "sucesso") {
+    tituloPessoas = "Você ainda não acompanha nenhuma pessoa";
+    descricaoPessoas =
+      "Cadastre alguém para começar a acompanhar suas informações e necessidades de apoio.";
+  }
+
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView
+      style={styles.container}
+      edges={["top", "left", "right"]}
+    >
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -34,7 +153,7 @@ export default function InicioScreen({
               <Text style={styles.brandInitials}>BS</Text>
             </View>
 
-            <View>
+            <View style={styles.brandText}>
               <Text style={styles.brandName}>BeaconSync</Text>
               <Text style={styles.brandSubtitle}>
                 Conectando cuidado
@@ -42,12 +161,17 @@ export default function InicioScreen({
             </View>
           </View>
 
-          <View
-            style={styles.avatar}
-            accessibilityLabel={nome ?? "Perfil"}
+          <Pressable
+            onPress={onAbrirPerfil}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir meu perfil"
+            style={({ pressed }) => [
+              styles.avatar,
+              pressed && styles.pressed,
+            ]}
           >
             <Text style={styles.avatarText}>{iniciais}</Text>
-          </View>
+          </Pressable>
         </View>
 
         <View style={styles.greeting}>
@@ -60,17 +184,55 @@ export default function InicioScreen({
           </Text>
         </View>
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>
-            Áreas acompanhadas
+        {demonstracao && (
+          <View style={styles.demoBox}>
+            <Text style={styles.infoFootnote}>
+              Prévia de desenvolvimento: este cenário é fictício.
+              Nenhuma consulta real foi realizada.
+            </Text>
+          </View>
+        )}
+
+        <View
+          style={[
+            styles.infoCard,
+            temAlertaAtivo && styles.warningCard,
+          ]}
+        >
+          {estadoAlertas.status === "carregando" && (
+            <ActivityIndicator color={colors.primary} />
+          )}
+
+          <Text
+            style={[
+              styles.infoTitle,
+              temAlertaAtivo && styles.warningText,
+            ]}
+          >
+            {tituloAlertas}
           </Text>
 
           <Text style={styles.infoDescription}>
-            As informações sobre alertas ainda não estão disponíveis.
+            {descricaoAlertas}
           </Text>
 
+          {temAlertaAtivo && (
+            <Text style={styles.warningText}>
+              {alertasAtivos.length}{" "}
+              {alertasAtivos.length === 1
+                ? "alerta ativo"
+                : "alertas ativos"}
+            </Text>
+          )}
+
+          <Botao
+            titulo={temAlertaAtivo ? "Ver alertas" : "Abrir alertas"}
+            onPress={onAbrirAlertas}
+            secundario={!temAlertaAtivo}
+          />
+
           <Text style={styles.infoFootnote}>
-            A ausência de informação não confirma segurança.
+            A ausência de alerta não confirma segurança.
           </Text>
         </View>
 
@@ -78,17 +240,80 @@ export default function InicioScreen({
           <Text style={styles.sectionTitle}>
             Pessoas acompanhadas
           </Text>
+
+          {estadoPessoas.status === "sucesso" && (
+            <Text
+              style={styles.counter}
+              accessibilityLabel={`${pessoas.length} pessoas acompanhadas`}
+            >
+              {pessoas.length}
+            </Text>
+          )}
         </View>
 
-        <View style={styles.placeholderCard}>
-          <Text style={styles.placeholderTitle}>
-            Informações indisponíveis
+        {estadoPessoas.status === "sucesso" &&
+        pessoas.length > 0 ? (
+          <View style={styles.cards}>
+            {pessoas.slice(0, 3).map((pessoa) => (
+              <CardPessoa
+                key={pessoa.id}
+                pessoa={pessoa}
+                onPress={() => onAbrirPessoa(pessoa)}
+              />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.card}>
+            {estadoPessoas.status === "carregando" && (
+              <ActivityIndicator color={colors.primary} />
+            )}
+
+            <Text style={styles.cardTitle}>
+              {tituloPessoas}
+            </Text>
+
+            <Text style={styles.description}>
+              {descricaoPessoas}
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.actions}>
+          <Botao
+            titulo="+ Cadastrar pessoa"
+            onPress={onCadastrarPessoa}
+          />
+
+          <Botao
+            titulo="Ver todas as pessoas"
+            onPress={onAbrirPessoas}
+            secundario
+          />
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>
+            Solicitações de vínculo
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.description}>
+            Acompanhe seus pedidos de acesso e consulte as
+            solicitações que você pode analisar.
           </Text>
 
-          <Text style={styles.placeholderDescription}>
-            As pessoas que você acompanha aparecerão aqui quando
-            os dados estiverem disponíveis.
-          </Text>
+          <Botao
+            titulo="Minhas solicitações"
+            onPress={onAbrirMinhasSolicitacoes}
+            secundario
+          />
+
+          <Botao
+            titulo="Solicitações recebidas"
+            onPress={onAbrirSolicitacoesRecebidas}
+            secundario
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -102,12 +327,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 32,
     width: "100%",
     maxWidth: 600,
     alignSelf: "center",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
   },
   header: {
     flexDirection: "row",
@@ -116,9 +341,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   brand: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+  },
+  brandText: {
     flex: 1,
   },
   brandIcon: {
@@ -145,9 +373,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: colors.primaryLight,
     alignItems: "center",
     justifyContent: "center",
@@ -172,13 +400,23 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: colors.textSecondary,
   },
-  infoCard: {
+  demoBox: {
+    padding: 16,
+    marginBottom: 20,
+    borderRadius: 14,
     backgroundColor: colors.infoBackground,
-    borderWidth: 1,
-    borderColor: colors.infoBorder,
-    borderRadius: 18,
+  },
+  infoCard: {
     padding: 18,
-    gap: 10,
+    gap: 14,
+    borderWidth: 1,
+    borderRadius: 18,
+    backgroundColor: colors.infoBackground,
+    borderColor: colors.infoBorder,
+  },
+  warningCard: {
+    backgroundColor: colors.warningBackground,
+    borderColor: colors.warningBorder,
   },
   infoTitle: {
     fontSize: 17,
@@ -191,36 +429,87 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   infoFootnote: {
-    marginTop: 12,
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     color: colors.infoText,
   },
+  warningText: {
+    color: colors.warningText,
+  },
   sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     marginTop: 28,
     marginBottom: 14,
   },
   sectionTitle: {
+    flex: 1,
     fontSize: 19,
     fontWeight: "600",
     color: colors.text,
   },
-  placeholderCard: {
-    backgroundColor: colors.surface,
+  counter: {
+    minWidth: 28,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    overflow: "hidden",
+    textAlign: "center",
+    fontSize: 13,
+    color: colors.primary,
+    backgroundColor: colors.primaryLight,
+  },
+  cards: {
+    gap: 12,
+  },
+  card: {
+    padding: 20,
+    gap: 14,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 18,
-    padding: 20,
-    gap: 8,
+    backgroundColor: colors.surface,
   },
-  placeholderTitle: {
+  cardTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: colors.text,
   },
-  placeholderDescription: {
+  description: {
     fontSize: 14,
     lineHeight: 22,
     color: colors.textSecondary,
+  },
+  actions: {
+    marginTop: 16,
+    gap: 10,
+  },
+  button: {
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+  },
+  secondaryButton: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    color: colors.surface,
+  },
+  secondaryButtonText: {
+    color: colors.primary,
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });
