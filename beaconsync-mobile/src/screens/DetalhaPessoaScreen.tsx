@@ -27,6 +27,10 @@ type Props = {
   demonstracao?: boolean;
   onVoltar: () => void;
   onEditar?: () => void;
+  onInformarSituacao?: () => void;
+  onAbrirExclusao?: () => void;
+  onPararAcompanhamento?: () => void;
+  onVerVinculos?: () => void;
   onTentarNovamente?: () => void;
 };
 
@@ -120,7 +124,11 @@ export default function DetalhesPessoaScreen({
   demonstracao = false,
   onVoltar,
   onEditar,
+  onAbrirExclusao,
   onTentarNovamente,
+  onInformarSituacao,
+  onPararAcompanhamento,
+  onVerVinculos,
 }: Props) {
   if (estado.status !== "sucesso") {
     let titulo = "Informações indisponíveis";
@@ -249,6 +257,21 @@ export default function DetalhesPessoaScreen({
             Edição indisponível no momento.
           </Text>
         )}
+
+        {onInformarSituacao && (
+  <Pressable
+    onPress={onInformarSituacao}
+    accessibilityRole="button"
+    style={({ pressed }) => [
+      styles.informarButton,
+      pressed && { opacity: 0.7 },
+    ]}
+  >
+    <Text style={styles.informarButtonText}>
+      Informar situação
+    </Text>
+  </Pressable>
+)}
 
         <Secao titulo="Situação informada">
           <View
@@ -431,9 +454,58 @@ export default function DetalhesPessoaScreen({
             );
           })
         )}
+        {onVerVinculos && (
+  <View style={styles.unlinkArea}>
+    <Pressable
+      onPress={onVerVinculos}
+      accessibilityRole="button"
+      style={({ pressed }) => [
+        styles.unlinkButton,
+        pressed && { opacity: 0.7 },
+      ]}
+    >
+      <Text style={styles.unlinkText}>
+        Pessoas com acesso ao cadastro
+      </Text>
+    </Pressable>
+  </View>
+)}
+        {onPararAcompanhamento && (
+  <View style={styles.unlinkArea}>
+    <Pressable
+      onPress={onPararAcompanhamento}
+      accessibilityRole="button"
+      style={({ pressed }) => [
+        styles.unlinkButton,
+        pressed && { opacity: 0.7 },
+      ]}
+    >
+      <Text style={styles.unlinkText}>
+        Parar de acompanhar
+      </Text>
+    </Pressable>
+
+    <Text style={styles.unlinkDescription}>
+      Remove somente seu vínculo com este cadastro.
+    </Text>
+  </View>
+)}
 
         <Aviso texto="O endereço cadastrado e a presença informada não confirmam que a pessoa está em segurança." />
-
+        {onAbrirExclusao && (
+  <Pressable
+    onPress={onAbrirExclusao}
+    accessibilityRole="button"
+    style={({ pressed }) => [
+      styles.deleteEntry,
+      pressed && { opacity: 0.6 },
+    ]}
+  >
+    <Text style={styles.deleteEntryText}>
+      Excluir cadastro
+    </Text>
+  </Pressable>
+)}
         <Botao
           texto="Voltar para pessoas"
           secundario
@@ -789,4 +861,58 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: colors.textSecondary,
   },
+  deleteEntry: {
+  minHeight: 48,
+  paddingHorizontal: 16,
+  paddingVertical: 14,
+  alignItems: "center",
+  justifyContent: "center",
+  },
+  deleteEntryText: {
+  color: "#AD3028",
+  fontSize: 14,
+  fontWeight: "600",
+  },
+informarButton: {
+  minHeight: 48,
+  paddingHorizontal: 16,
+  paddingVertical: 14,
+  borderRadius: 12,
+  backgroundColor: colors.primary,
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: 12,
+  marginBottom: 16,
+},
+informarButtonText: {
+  color: colors.surface,
+  fontSize: 15,
+  fontWeight: "600",
+},
+unlinkArea: {
+  gap: 8,
+  marginTop: 8,
+  marginBottom: 16,
+},
+unlinkButton: {
+  minHeight: 48,
+  paddingHorizontal: 16,
+  paddingVertical: 14,
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: colors.primary,
+  alignItems: "center",
+  justifyContent: "center",
+},
+unlinkText: {
+  fontSize: 15,
+  fontWeight: "600",
+  color: colors.primary,
+},
+unlinkDescription: {
+  fontSize: 13,
+  lineHeight: 20,
+  color: colors.textSecondary,
+  textAlign: "center",
+},
 });
