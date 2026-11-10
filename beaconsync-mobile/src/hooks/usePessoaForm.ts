@@ -176,10 +176,19 @@ function validarEtapa(
 }
 
 export function usePessoaForm(
-  onCadastrar?: EnviarCadastroPessoa
+  onCadastrar?: EnviarCadastroPessoa,
+  valoresIniciais?: DadosCadastroPessoa,
+  editando = false
 ) {
-  const [dados, setDados] =
-    useState<DadosCadastroPessoa>(dadosIniciais);
+  const [dados, setDados] = useState<DadosCadastroPessoa>(() => {
+    const valores = valoresIniciais ?? dadosIniciais;
+
+    return {
+      ...valores,
+      necessidades: [...valores.necessidades],
+      recursos: [...valores.recursos],
+    };
+  });
 
   const [etapa, setEtapa] = useState<EtapaCadastro>(1);
   const [erros, setErros] = useState<ErrosCadastroPessoa>({});
@@ -273,12 +282,15 @@ function alternarSelecao(
 
     setErros({});
 
-    if (!onCadastrar) {
-      setErroEnvio(
-        "O envio está indisponível no momento. Nenhum dado foi salvo."
-      );
-      return false;
-    }
+if (!onCadastrar) {
+  setErroEnvio(
+    editando
+      ? "O salvamento está indisponível no momento. Nenhuma alteração foi salva."
+      : "O envio está indisponível no momento. Nenhum dado foi salvo."
+  );
+
+  return false;
+}
 
     envioEmAndamento.current = true;
     setEnviando(true);
