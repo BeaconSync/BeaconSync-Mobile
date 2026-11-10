@@ -40,10 +40,20 @@ import {
   vinculos,
 } from "../hooks/usePessoaForm";
 import { colors } from "../theme/colors";
-import type { EnviarCadastroPessoa } from "../types/cadastroPessoa";
+import type {
+  DadosCadastroPessoa,
+  EnviarCadastroPessoa,
+} from "../types/cadastroPessoa";
 
 type Props = {
   onCadastrar?: EnviarCadastroPessoa;
+
+  edicao?: {
+    dados: DadosCadastroPessoa;
+    onCancelar: () => void;
+    onSalvar?: EnviarCadastroPessoa;
+    demonstracao?: boolean;
+  };
 };
 
 type Painel = "uf" | "privacidade" | "resumo" | null;
@@ -98,8 +108,10 @@ function obterIniciais(nome: string) {
 
 export default function CadastroPessoaScreen({
   onCadastrar,
+  edicao,
 }: Props) {
   const router = useRouter();
+
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const selecionandoFoto = useRef(false);
 
@@ -119,7 +131,11 @@ export default function CadastroPessoaScreen({
     avancar,
     voltar,
     enviar,
-  } = usePessoaForm(onCadastrar);
+  } = usePessoaForm(
+    edicao ? edicao.onSalvar : onCadastrar,
+    edicao?.dados,
+   Boolean(edicao)
+  );
 
   const bloqueado = enviando || escolhendoFoto;
   const etapaAtual = etapas[etapa - 1];
@@ -145,36 +161,50 @@ export default function CadastroPessoaScreen({
     });
   }, [etapa, concluido]);
 
-  useEffect(() => {
-    const subscription = BackHandler.addEventListener(
-      "hardwareBackPress",
-      () => bloqueado
-    );
+useEffect(() => {
+  const subscription = BackHandler.addEventListener(
+    "hardwareBackPress",
+    () => {
+      if (bloqueado) return true;
 
-    return () => subscription.remove();
-  }, [bloqueado]);
+      if (edicao) {
+        edicao.onCancelar();
+        return true;
+      }
+
+      return false;
+    }
+  );
+
+  return () => subscription.remove();
+}, [bloqueado, edicao]);
 
   function irParaPessoas() {
     Keyboard.dismiss();
     router.replace("/pessoas");
   }
 
-  function voltarEtapa() {
-    if (bloqueado) return;
+function voltarEtapa() {
+  if (bloqueado) return;
 
-    Keyboard.dismiss();
+  Keyboard.dismiss();
 
-    if (etapa > 1) {
-      voltar();
-      return;
-    }
-
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      irParaPessoas();
-    }
+  if (etapa > 1) {
+    voltar();
+    return;
   }
+
+  if (edicao) {
+    edicao.onCancelar();
+    return;
+  }
+
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    irParaPessoas();
+  }
+}
 
   async function continuar() {
     if (bloqueado) return;
@@ -286,13 +316,30 @@ export default function CadastroPessoaScreen({
       edges={["left", "right", "bottom"]}
     >
       <Stack.Screen
-        options={{
-          title: "Cadastrar pessoa",
-          headerBackButtonDisplayMode: "minimal",
-          headerBackVisible: !bloqueado,
-          gestureEnabled: !bloqueado,
-        }}
-      />
+  options={{
+    title: edicao ? "Editar pessoa" : "Cadastrar pessoa",
+    headerBackButtonDisplayMode: "minimal",
+    headerBackVisible: !bloqueado && !edicao,
+    gestureEnabled: !bloqueado && !edicao,
+    headerLeft: edicao
+      ? () => (
+          <Pressable
+            onPress={edicao.onCancelar}
+            disabled={bloqueado}
+            accessibilityRole="button"
+            accessibilityLabel="Cancelar edição"
+            style={{
+              minHeight: 44,
+              justifyContent: "center",
+              paddingRight: 12,
+            }}
+          >
+            <Text style={styles.linkText}>Cancelar</Text>
+          </Pressable>
+        )
+      : undefined,
+  }}
+/>
 
       <ScrollView
         ref={scrollRef}
@@ -302,50 +349,58 @@ export default function CadastroPessoaScreen({
         automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
       >
-        {concluido ? (
-          <View style={styles.success}>
-            <View style={styles.successIcon}>
-              <Check size={30} color="#31715A" />
-            </View>
+ {concluido ? (
+  <View style={styles.success}>
+    <View style={styles.successIcon}>
+      <Check size={30} color="#31715A" />
+    </View>
 
-            <Text style={styles.successTitle}>
-              Cadastro concluído
-            </Text>
+    <Text style={styles.successTitle}>
+      {edicao ? "Alterações salvas" : "Cadastro concluído"}
+    </Text>
 
-            <Text style={styles.centerDescription}>
-              Agora você pode acompanhar essa pessoa e manter
-              as informações de apoio atualizadas.
-            </Text>
+    <Text style={styles.centerDescription}>
+      {edicao
+        ? "As informações da pessoa foram atualizadas."
+        : "Agora você pode acompanhar essa pessoa e manter as informações de apoio atualizadas."}
+    </Text>
 
-            <View style={styles.personCard}>
-              <Avatar nome={dados.nome} uri={dados.fotoUri} />
+    <View style={styles.personCard}>
+      <Avatar nome={dados.nome} uri={dados.fotoUri} />
 
-              <View style={styles.flex}>
-                <Text style={styles.personName}>
-                  {dados.nome.trim()}
-                </Text>
-                <Text style={styles.helper}>
-                  {dados.vinculo} · Cadastro salvo
-                </Text>
-              </View>
+      <View style={styles.flex}>
+        <Text style={styles.personName}>
+          {dados.nome.trim()}
+        </Text>
 
-              <Check size={20} color="#31715A" />
-            </View>
+        <Text style={styles.helper}>
+          {dados.vinculo}
+          {" · "}
+          {edicao ? "Dados atualizados" : "Cadastro salvo"}
+        </Text>
+      </View>
 
-            <Aviso texto="O cadastro não confirma segurança nem aciona um resgate. Durante um alerta, mantenha a situação da pessoa atualizada." />
+      <Check size={20} color="#31715A" />
+    </View>
 
-            <Botao
-              texto="Ver dados cadastrados"
-              onPress={() => abrirPainel("resumo")}
-            />
+    <Aviso texto="O cadastro não confirma segurança nem aciona um resgate. Durante um alerta, mantenha a situação da pessoa atualizada." />
 
-            <Botao
-              texto="Voltar para pessoas"
-              secundario
-              onPress={irParaPessoas}
-            />
-          </View>
-        ) : (
+    <Botao
+      texto={
+        edicao
+          ? "Ver dados atualizados"
+          : "Ver dados cadastrados"
+      }
+      onPress={() => abrirPainel("resumo")}
+    />
+
+    <Botao
+      texto="Voltar para pessoas"
+      secundario
+      onPress={irParaPessoas}
+    />
+  </View>
+) : (
           <>
             <View style={styles.stepHeader}>
               <Text style={styles.stepText}>
@@ -382,10 +437,21 @@ export default function CadastroPessoaScreen({
               {etapaAtual.descricao}
             </Text>
 
+              {edicao && (
+            <Aviso
+              texto={
+               edicao.demonstracao
+               ? "Edição de exemplo. Você pode alterar os campos, mas nada será salvo. Cancelar mantém os dados originais."
+               : "Revise as informações antes de salvar. Cancelar descarta as alterações ainda não salvas."
+              }
+             />
+            )}
+
             {Object.values(erros).some(Boolean) && (
               <Aviso
                 erro
                 texto="Confira os campos indicados antes de continuar."
+                
               />
             )}
 
@@ -650,36 +716,46 @@ export default function CadastroPessoaScreen({
               </>
             )}
 
-            {enviando && (
-              <Aviso texto="Enviando seu cadastro. Aguarde a confirmação; não é necessário enviar novamente." />
-            )}
+           {enviando && (
+  <Aviso
+    texto={
+      edicao
+        ? "Salvando as alterações. Aguarde a confirmação; não é necessário enviar novamente."
+        : "Enviando seu cadastro. Aguarde a confirmação; não é necessário enviar novamente."
+    }
+  />
+)}
 
-            <View style={styles.actions}>
-              <View style={styles.backAction}>
-                <Botao
-                  texto="Voltar"
-                  secundario
-                  desabilitado={bloqueado}
-                  onPress={voltarEtapa}
-                />
-              </View>
+         <View style={styles.actions}>
+  <View style={styles.backAction}>
+    <Botao
+      texto="Voltar"
+      secundario
+      desabilitado={bloqueado}
+      onPress={voltarEtapa}
+    />
+  </View>
 
-              <View style={styles.flex}>
-                <Botao
-                  texto={
-                    enviando
-                      ? "Enviando..."
-                      : etapa === 3
-                        ? "Concluir cadastro"
-                        : "Continuar"
-                  }
-                  carregando={enviando}
-                  desabilitado={bloqueado}
-                  seta={etapa < 3}
-                  onPress={continuar}
-                />
-              </View>
-            </View>
+  <View style={styles.flex}>
+    <Botao
+      texto={
+        enviando
+          ? edicao
+            ? "Salvando..."
+            : "Enviando..."
+          : etapa === 3
+            ? edicao
+              ? "Salvar alterações"
+              : "Concluir cadastro"
+            : "Continuar"
+      }
+      carregando={enviando}
+      desabilitado={bloqueado}
+      seta={etapa < 3}
+      onPress={continuar}
+    />
+  </View>
+</View>
           </>
         )}
       </ScrollView>
