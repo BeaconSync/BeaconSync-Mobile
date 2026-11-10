@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Bell,
   ChevronRight,
@@ -15,8 +15,12 @@ import {
   StyleSheet,
   Text,
   View,
+  Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+} from "react-native-safe-area-context";
 
 import { colors } from "../theme/colors";
 import type {
@@ -25,9 +29,16 @@ import type {
   FiltroAlertas,
 } from "../types/alerta";
 
+import PessoasDoAlerta from "../components/PessoaDoAlerta";
+
 type AlertasScreenProps = {
   estado?: EstadoAlertas;
+  demonstracao?: boolean;
   onTentarNovamente?: () => void;
+  onAbrirPessoa?: (
+    pessoaId: string,
+    alerta: Alerta
+  ) => void;
 };
 
 const LISTA_VAZIA: Alerta[] = [];
@@ -61,11 +72,18 @@ function formatarData(valor: string | null) {
 
 export default function AlertasScreen({
   estado = { status: "indisponivel" },
+  demonstracao = false,
   onTentarNovamente,
+  onAbrirPessoa,
 }: AlertasScreenProps) {
   const [filtro, setFiltro] = useState<FiltroAlertas>("ativos");
   const [alertaSelecionadoId, setAlertaSelecionadoId] =
     useState<string | null>(null);
+
+  const aberturaPendente = useRef<{
+  pessoaId: string;
+  alerta: Alerta;
+} | null>(null);
 
   const alertas =
     estado.status === "sucesso"
@@ -111,16 +129,57 @@ export default function AlertasScreen({
     }
   }
 
-  function fecharDetalhes() {
-    setAlertaSelecionadoId(null);
+function fecharDetalhes() {
+  aberturaPendente.current = null;
+  setAlertaSelecionadoId(null);
+}
+
+function concluirAberturaPessoa() {
+  const destino = aberturaPendente.current;
+
+  aberturaPendente.current = null;
+
+  if (destino) {
+    onAbrirPessoa?.(destino.pessoaId, destino.alerta);
   }
+}
+
+function abrirPessoaDoAlerta(pessoaId: string) {
+  if (
+    !alertaSelecionado ||
+    !onAbrirPessoa ||
+    aberturaPendente.current
+  ) {
+    return;
+  }
+
+  aberturaPendente.current = {
+    pessoaId,
+    alerta: alertaSelecionado,
+  };
+
+  setAlertaSelecionadoId(null);
+
+  if (Platform.OS !== "ios") {
+    concluirAberturaPessoa();
+  }
+}
 
   return (
     <SafeAreaView
       style={styles.container}
       edges={["top", "left", "right"]}
     >
-      <View style={styles.content}>
+<View style={styles.content}>
+  <FlatList
+    style={styles.list}
+    data={alertasFiltrados}
+    keyExtractor={(alerta) => alerta.id}
+    showsVerticalScrollIndicator={false}
+    contentContainerStyle={styles.listContent}
+    ItemSeparatorComponent={Separador}
+    ListHeaderComponent={
+      <>
         <View style={styles.header}>
           <Text style={styles.title}>Alertas</Text>
 
@@ -128,6 +187,17 @@ export default function AlertasScreen({
             Acompanhe os avisos das regiões de quem você cuida.
           </Text>
         </View>
+
+        {demonstracao && (
+          <View style={styles.notice}>
+            <Info size={19} color={colors.infoText} />
+
+            <Text style={styles.noticeText}>
+              Prévia de desenvolvimento: os alertas e as
+              relações com pessoas abaixo são fictícios.
+            </Text>
+          </View>
+        )}
 
         <View style={styles.filters}>
           {filtros.map((item) => {
@@ -168,106 +238,104 @@ export default function AlertasScreen({
             Mantenha os endereços e as informações atualizados.
           </Text>
         </View>
-
-        <FlatList
-          style={styles.list}
-          data={alertasFiltrados}
-          keyExtractor={(alerta) => alerta.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={Separador}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => setAlertaSelecionadoId(item.id)}
-              accessibilityRole="button"
-              accessibilityLabel={`Ver alerta: ${item.titulo}`}
-              style={({ pressed }) => [
-                styles.card,
-                pressed && styles.pressed,
-              ]}
-            >
-              <View style={styles.cardHeader}>
-                <StatusAlerta status={item.status} />
-
-                <ChevronRight
-                  size={20}
-                  color={colors.textSecondary}
-                />
-              </View>
-
-              <Text style={styles.cardTitle}>
-                {item.titulo}
-              </Text>
-
-              <View style={styles.location}>
-                <MapPin size={17} color={colors.textSecondary} />
-                <Text style={styles.secondaryText}>
-                  {item.area || "Área não informada"}
-                </Text>
-              </View>
-
-              <Text
-                style={styles.cardDescription}
-                numberOfLines={2}
-              >
-                {item.descricao}
-              </Text>
-
-              <Text style={styles.date}>
-                Emissão: {formatarData(item.emitidoEm)}
-              </Text>
-            </Pressable>
-          )}
-          ListEmptyComponent={
-            <View style={styles.messageCard}>
-              <View style={styles.messageIcon}>
-                {estado.status === "carregando" ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={colors.primary}
-                  />
-                ) : (
-                  <Bell size={28} color={colors.primary} />
-                )}
-              </View>
-
-              <Text
-                style={styles.messageTitle}
-                accessibilityLiveRegion="polite"
-              >
-                {tituloMensagem}
-              </Text>
-
-              <Text style={styles.messageDescription}>
-                {descricaoMensagem}
-              </Text>
-
-              {estado.status === "erro" &&
-                onTentarNovamente && (
-                  <Pressable
-                    onPress={onTentarNovamente}
-                    accessibilityRole="button"
-                    style={({ pressed }) => [
-                      styles.button,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <Text style={styles.buttonText}>
-                      Tentar novamente
-                    </Text>
-                  </Pressable>
-                )}
-            </View>
-          }
-        />
-      </View>
-
-      <Modal
-        visible={Boolean(alertaSelecionado)}
-        animationType="slide"
-        onRequestClose={fecharDetalhes}
+      </>
+    }
+    renderItem={({ item }) => (
+      <Pressable
+        onPress={() => setAlertaSelecionadoId(item.id)}
+        accessibilityRole="button"
+        accessibilityLabel={`Ver alerta: ${item.titulo}`}
+        style={({ pressed }) => [
+          styles.card,
+          pressed && styles.pressed,
+        ]}
       >
-        <SafeAreaView style={styles.container}>
+        <View style={styles.cardHeader}>
+          <StatusAlerta status={item.status} />
+
+          <ChevronRight
+            size={20}
+            color={colors.textSecondary}
+          />
+        </View>
+
+        <Text style={styles.cardTitle}>{item.titulo}</Text>
+
+        <View style={styles.location}>
+          <MapPin size={17} color={colors.textSecondary} />
+
+          <Text style={styles.secondaryText}>
+            {item.area || "Área não informada"}
+          </Text>
+        </View>
+
+        <Text
+          style={styles.cardDescription}
+          numberOfLines={2}
+        >
+          {item.descricao}
+        </Text>
+
+        <Text style={styles.date}>
+          Emissão: {formatarData(item.emitidoEm)}
+        </Text>
+      </Pressable>
+    )}
+    ListEmptyComponent={
+      <View style={styles.messageCard}>
+        <View style={styles.messageIcon}>
+          {estado.status === "carregando" ? (
+            <ActivityIndicator
+              size="small"
+              color={colors.primary}
+            />
+          ) : (
+            <Bell size={28} color={colors.primary} />
+          )}
+        </View>
+
+        <Text
+          style={styles.messageTitle}
+          accessibilityLiveRegion="polite"
+        >
+          {tituloMensagem}
+        </Text>
+
+        <Text style={styles.messageDescription}>
+          {descricaoMensagem}
+        </Text>
+
+        {estado.status === "erro" && onTentarNovamente && (
+          <Pressable
+            onPress={onTentarNovamente}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.button,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.buttonText}>
+              Tentar novamente
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    }
+  />
+</View>
+
+<Modal
+  visible={Boolean(alertaSelecionado)}
+  animationType="slide"
+  presentationStyle="fullScreen"
+  onRequestClose={fecharDetalhes}
+  onDismiss={concluirAberturaPessoa}
+>
+  <SafeAreaProvider style={styles.container}>
+    <SafeAreaView
+      style={styles.container}
+      edges={["top", "bottom", "left", "right"]}
+    >
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
               Detalhes do alerta
@@ -333,6 +401,13 @@ export default function AlertasScreen({
                   "Não há descrição disponível."}
               </Text>
 
+              <PessoasDoAlerta
+                estado={alertaSelecionado.pessoasRelacionadas}
+                onAbrirPessoa={
+                onAbrirPessoa ? abrirPessoaDoAlerta : undefined
+               }
+              />
+
               <Text style={styles.sectionTitle}>
                 Orientações informadas
               </Text>
@@ -385,10 +460,11 @@ export default function AlertasScreen({
                   Voltar para alertas
                 </Text>
               </Pressable>
-            </ScrollView>
-          )}
-        </SafeAreaView>
-      </Modal>
+                      </ScrollView>
+        )}
+      </SafeAreaView>
+    </SafeAreaProvider>
+  </Modal>
     </SafeAreaView>
   );
 }
@@ -627,26 +703,29 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7,
   },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  modalTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  closeButton: {
-    width: 48,
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+modalHeader: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+  paddingHorizontal: 20,
+  paddingVertical: 12,
+  backgroundColor: colors.background,
+},
+modalTitle: {
+  flex: 1,
+  flexShrink: 1,
+  fontSize: 18,
+  fontWeight: "600",
+  color: colors.text,
+},
+closeButton: {
+  width: 48,
+  height: 48,
+  flexShrink: 0,
+  alignItems: "center",
+  justifyContent: "center",
+},
   detailContent: {
     width: "100%",
     maxWidth: 600,
