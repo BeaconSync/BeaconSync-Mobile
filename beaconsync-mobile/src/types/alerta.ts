@@ -1,3 +1,22 @@
+import type { StatusInformado } from "./informarSituacao";
+
+export type PessoaRelacionadaAlerta = {
+  id: string;
+  nome: string;
+  localReferencia: string | null;
+  situacao: StatusInformado | null;
+  dataResposta: string | null;
+};
+
+export type EstadoPessoasRelacionadas =
+  | { status: "indisponivel" }
+  | { status: "carregando" }
+  | { status: "erro"; mensagem: string }
+  | {
+      status: "sucesso";
+      pessoas: PessoaRelacionadaAlerta[];
+    };
+
 export type Alerta = {
   id: string;
   titulo: string;
@@ -8,6 +27,7 @@ export type Alerta = {
   fonte: string | null;
   emitidoEm: string | null;
   orientacoes: string[];
+  pessoasRelacionadas?: EstadoPessoasRelacionadas;
 };
 
 export type EstadoAlertas =
@@ -16,4 +36,7 @@ export type EstadoAlertas =
   | { status: "erro"; mensagem: string }
   | { status: "sucesso"; alertas: Alerta[] };
 
-export type FiltroAlertas = "ativos" | "encerrados" | "todos";
+export type FiltroAlertas =
+  | "ativos"
+  | "encerrados"
+  | "todos";
