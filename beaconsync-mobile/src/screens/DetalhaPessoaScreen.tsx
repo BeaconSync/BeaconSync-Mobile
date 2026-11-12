@@ -1,10 +1,5 @@
 import { useState, type ReactNode } from "react";
-import {
-  Info,
-  MapPin,
-  Pencil,
-  UserRound,
-} from "lucide-react-native";
+import { Info, MapPin, Pencil, UserRound } from "lucide-react-native";
 import {
   ActivityIndicator,
   Image,
@@ -15,13 +10,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { colors } from "../theme/colors";
 import type {
   EstadoDetalhesPessoa,
   PessoaDetalhes,
 } from "../types/detalhaPessoa";
-
 type Props = {
   estado: EstadoDetalhesPessoa;
   demonstracao?: boolean;
@@ -31,37 +24,27 @@ type Props = {
   onAbrirExclusao?: () => void;
   onPararAcompanhamento?: () => void;
   onVerVinculos?: () => void;
+  onGerenciarEnderecos?: () => void;
   onTentarNovamente?: () => void;
 };
-
 function obterIniciais(nome: string) {
   const partes = nome.trim().split(/\s+/).filter(Boolean);
-
   if (!partes.length) return "?";
-
   return (
-    partes[0][0] +
-    (partes.length > 1 ? partes[partes.length - 1][0] : "")
+    partes[0][0] + (partes.length > 1 ? partes[partes.length - 1][0] : "")
   ).toUpperCase();
 }
-
 function obterNascimento(valor: string | null) {
   if (!valor) return null;
-
   const resultado = /^(\d{4})-(\d{2})-(\d{2})(?:T|$)/.exec(valor);
-
   if (!resultado) return null;
-
   const ano = Number(resultado[1]);
   const mes = Number(resultado[2]);
   const dia = Number(resultado[3]);
-
   if (ano < 1) return null;
-
   const data = new Date(0);
   data.setUTCHours(0, 0, 0, 0);
   data.setUTCFullYear(ano, mes - 1, dia);
-
   if (
     data.getUTCFullYear() !== ano ||
     data.getUTCMonth() !== mes - 1 ||
@@ -69,29 +52,18 @@ function obterNascimento(valor: string | null) {
   ) {
     return null;
   }
-
   const hoje = new Date();
-
   const nascimentoNumerico = ano * 10000 + mes * 100 + dia;
   const hojeNumerico =
-    hoje.getFullYear() * 10000 +
-    (hoje.getMonth() + 1) * 100 +
-    hoje.getDate();
-
+    hoje.getFullYear() * 10000 + (hoje.getMonth() + 1) * 100 + hoje.getDate();
   if (nascimentoNumerico > hojeNumerico) return null;
-
   let idade = hoje.getFullYear() - ano;
-
   if (
     hoje.getMonth() + 1 < mes ||
-    (
-      hoje.getMonth() + 1 === mes &&
-      hoje.getDate() < dia
-    )
+    (hoje.getMonth() + 1 === mes && hoje.getDate() < dia)
   ) {
     idade -= 1;
   }
-
   return {
     data: `${resultado[3]}/${resultado[2]}/${resultado[1]}`,
     idade:
@@ -100,16 +72,12 @@ function obterNascimento(valor: string | null) {
         : `${idade} ${idade === 1 ? "ano" : "anos"}`,
   };
 }
-
 function formatarMomento(valor?: string | null) {
   if (!valor) return "Data não informada";
-
   const data = new Date(valor);
-
   if (Number.isNaN(data.getTime())) {
     return "Data não informada";
   }
-
   return data.toLocaleString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
@@ -118,7 +86,6 @@ function formatarMomento(valor?: string | null) {
     minute: "2-digit",
   });
 }
-
 export default function DetalhesPessoaScreen({
   estado,
   demonstracao = false,
@@ -129,12 +96,11 @@ export default function DetalhesPessoaScreen({
   onInformarSituacao,
   onPararAcompanhamento,
   onVerVinculos,
+  onGerenciarEnderecos,
 }: Props) {
   if (estado.status !== "sucesso") {
     let titulo = "Informações indisponíveis";
-    let descricao =
-      "Não foi possível consultar os dados desta pessoa.";
-
+    let descricao = "Não foi possível consultar os dados desta pessoa.";
     if (estado.status === "carregando") {
       titulo = "Carregando pessoa";
       descricao = "Aguarde enquanto buscamos as informações.";
@@ -146,7 +112,6 @@ export default function DetalhesPessoaScreen({
       titulo = "Não foi possível carregar";
       descricao = estado.mensagem;
     }
-
     return (
       <SafeAreaView
         style={styles.container}
@@ -155,42 +120,24 @@ export default function DetalhesPessoaScreen({
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.emptyCard}>
             {estado.status === "carregando" ? (
-              <ActivityIndicator
-                size="large"
-                color={colors.primary}
-              />
+              <ActivityIndicator size="large" color={colors.primary} />
             ) : (
               <UserRound size={36} color={colors.primary} />
             )}
-
             <Text style={styles.emptyTitle}>{titulo}</Text>
-
-            <Text style={styles.emptyDescription}>
-              {descricao}
-            </Text>
-
+            <Text style={styles.emptyDescription}>{descricao}</Text>
             {estado.status === "erro" && onTentarNovamente && (
-              <Botao
-                texto="Tentar novamente"
-                onPress={onTentarNovamente}
-              />
+              <Botao texto="Tentar novamente" onPress={onTentarNovamente} />
             )}
           </View>
-
-          <Botao
-            texto="Voltar para pessoas"
-            secundario
-            onPress={onVoltar}
-          />
+          <Botao texto="Voltar para pessoas" secundario onPress={onVoltar} />
         </ScrollView>
       </SafeAreaView>
     );
   }
-
   const { pessoa } = estado;
   const nascimento = obterNascimento(pessoa.dataNascimento);
   const situacao = pessoa.situacao;
-
   const corSituacao =
     situacao?.status === "Seguro"
       ? "#31715A"
@@ -199,7 +146,6 @@ export default function DetalhesPessoaScreen({
         : situacao?.status === "Sem Contato"
           ? "#805D1C"
           : colors.infoText;
-
   const fundoSituacao =
     situacao?.status === "Seguro"
       ? "#EAF3ED"
@@ -208,12 +154,8 @@ export default function DetalhesPessoaScreen({
         : situacao?.status === "Sem Contato"
           ? colors.primaryLight
           : colors.infoBackground;
-
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -221,22 +163,18 @@ export default function DetalhesPessoaScreen({
         {demonstracao && (
           <Aviso texto="Prévia de desenvolvimento: esta pessoa é fictícia. Nenhum cadastro foi salvo." />
         )}
-
         <View style={styles.profile}>
           <AvatarPessoa
             key={`${pessoa.id}-${pessoa.fotoUrl ?? ""}`}
             nome={pessoa.nome}
             fotoUrl={pessoa.fotoUrl}
           />
-
           <Text style={styles.name}>{pessoa.nome}</Text>
-
           <Text style={styles.profileDescription}>
             {nascimento?.idade ?? "Idade não informada"}
             {pessoa.vinculo ? ` · ${pessoa.vinculo}` : ""}
           </Text>
         </View>
-
         <Pressable
           onPress={onEditar}
           disabled={!onEditar}
@@ -251,62 +189,44 @@ export default function DetalhesPessoaScreen({
           <Pencil size={18} color={colors.primary} />
           <Text style={styles.editText}>Editar cadastro</Text>
         </Pressable>
-
         {!onEditar && (
-          <Text style={styles.actionHelp}>
-            Edição indisponível no momento.
-          </Text>
+          <Text style={styles.actionHelp}>Edição indisponível no momento.</Text>
         )}
-
         {onInformarSituacao && (
-  <Pressable
-    onPress={onInformarSituacao}
-    accessibilityRole="button"
-    style={({ pressed }) => [
-      styles.informarButton,
-      pressed && { opacity: 0.7 },
-    ]}
-  >
-    <Text style={styles.informarButtonText}>
-      Informar situação
-    </Text>
-  </Pressable>
-)}
-
-        <Secao titulo="Situação informada">
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: fundoSituacao },
+          <Pressable
+            onPress={onInformarSituacao}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.informarButton,
+              pressed && { opacity: 0.7 },
             ]}
           >
-            <Text
-              style={[
-                styles.statusText,
-                { color: corSituacao },
-              ]}
-            >
+            <Text style={styles.informarButtonText}>Informar situação</Text>
+          </Pressable>
+        )}
+        <Secao titulo="Situação informada">
+          <View
+            style={[styles.statusBadge, { backgroundColor: fundoSituacao }]}
+          >
+            <Text style={[styles.statusText, { color: corSituacao }]}>
               {situacao?.status ?? "Não informada"}
             </Text>
           </View>
-
           {situacao ? (
             <>
               <Informacao
                 titulo="Última resposta"
                 valor={formatarMomento(situacao.dataResposta)}
               />
-
               {situacao.observacao?.trim() && (
                 <Informacao
                   titulo="Observação da resposta"
                   valor={situacao.observacao}
                 />
               )}
-
               <Text style={styles.helper}>
-                Esta é a última situação registrada. A condição
-                da pessoa pode ter mudado desde essa resposta.
+                Esta é a última situação registrada. A condição da pessoa pode
+                ter mudado desde essa resposta.
               </Text>
             </>
           ) : (
@@ -315,49 +235,38 @@ export default function DetalhesPessoaScreen({
             </Text>
           )}
         </Secao>
-
         <Secao titulo="Informações básicas">
-          <Informacao
-            titulo="Nome"
-            valor={pessoa.nome}
-          />
-
-          <Informacao
-            titulo="Data de nascimento"
-            valor={nascimento?.data}
-          />
-
-          <Informacao
-            titulo="Seu vínculo"
-            valor={pessoa.vinculo}
-          />
+          <Informacao titulo="Nome" valor={pessoa.nome} />
+          <Informacao titulo="Data de nascimento" valor={nascimento?.data} />
+          <Informacao titulo="Seu vínculo" valor={pessoa.vinculo} />
         </Secao>
-
         <Secao titulo="Necessidades de apoio">
           <Etiquetas
             itens={pessoa.necessidades}
             vazio="Nenhuma necessidade de apoio informada."
           />
         </Secao>
-
         <Secao titulo="Recursos para deslocamento">
           <Etiquetas
             itens={pessoa.recursos}
             vazio="Nenhum recurso para deslocamento informado."
           />
         </Secao>
-
         <Secao titulo="Observações">
           <Text style={styles.body}>
-            {pessoa.observacoes?.trim() ||
-              "Nenhuma observação informada."}
+            {pessoa.observacoes?.trim() || "Nenhuma observação informada."}
           </Text>
         </Secao>
-
-        <Text style={styles.sectionHeading}>
-          Endereços cadastrados
-        </Text>
-
+        <Text style={styles.sectionHeading}>Endereços cadastrados</Text>
+        {onGerenciarEnderecos && (
+          <View style={styles.unlinkArea}>
+            <Botao
+              texto="Gerenciar endereços"
+              secundario
+              onPress={onGerenciarEnderecos}
+            />
+          </View>
+        )}
         {pessoa.enderecos.length === 0 ? (
           <View style={styles.card}>
             <Text style={styles.body}>
@@ -366,87 +275,62 @@ export default function DetalhesPessoaScreen({
           </View>
         ) : (
           pessoa.enderecos.map((endereco, indice) => {
-            const cidadeUf = [
-              endereco.cidade,
-              endereco.uf,
-            ]
+            const cidadeUf = [endereco.cidade, endereco.uf]
               .filter(Boolean)
               .join(" - ");
-
             const linhasEndereco = [
-              [endereco.logradouro, endereco.numero]
-                .filter(Boolean)
-                .join(", "),
+              [endereco.logradouro, endereco.numero].filter(Boolean).join(", "),
               endereco.complemento,
               endereco.bairro,
-              endereco.distrito
-                ? `Distrito: ${endereco.distrito}`
-                : null,
+              endereco.distrito ? `Distrito: ${endereco.distrito}` : null,
               cidadeUf,
               endereco.cep ? `CEP: ${endereco.cep}` : null,
             ]
               .filter(Boolean)
               .join("\n");
-
             const presenca =
               endereco.presencaInformada === true
                 ? "Presença informada neste endereço."
                 : endereco.presencaInformada === false
                   ? "Foi informado que a pessoa não está neste endereço."
                   : "Presença neste endereço não informada.";
-
             return (
               <View key={endereco.id} style={styles.card}>
                 <View style={styles.addressHeader}>
                   <MapPin size={21} color={colors.primary} />
-
                   <Text style={styles.addressTitle}>
-                    {endereco.nomeLocal ||
-                      `Endereço ${indice + 1}`}
+                    {endereco.nomeLocal || `Endereço ${indice + 1}`}
                   </Text>
                 </View>
-
                 {endereco.indicadoComoAtual && (
                   <Text style={styles.addressTag}>
                     Indicado como atual no cadastro
                   </Text>
                 )}
-
                 <Text style={styles.body}>
-                  {linhasEndereco ||
-                    "Dados do endereço não informados."}
+                  {linhasEndereco || "Dados do endereço não informados."}
                 </Text>
-
                 {endereco.pontoReferencia && (
                   <Informacao
                     titulo="Ponto de referência"
                     valor={endereco.pontoReferencia}
                   />
                 )}
-
                 {endereco.tipoImovel && (
                   <Informacao
                     titulo="Tipo de imóvel"
                     valor={endereco.tipoImovel}
                   />
                 )}
-
                 {endereco.andar != null && (
-                  <Informacao
-                    titulo="Andar"
-                    valor={String(endereco.andar)}
-                  />
+                  <Informacao titulo="Andar" valor={String(endereco.andar)} />
                 )}
-
                 <View style={styles.presenceBox}>
                   <Text style={styles.body}>{presenca}</Text>
-
                   {endereco.presencaInformadaEm && (
                     <Text style={styles.helper}>
                       Informado em{" "}
-                      {formatarMomento(
-                        endereco.presencaInformadaEm
-                      )}
+                      {formatarMomento(endereco.presencaInformadaEm)}
                     </Text>
                   )}
                 </View>
@@ -455,73 +339,61 @@ export default function DetalhesPessoaScreen({
           })
         )}
         {onVerVinculos && (
-  <View style={styles.unlinkArea}>
-    <Pressable
-      onPress={onVerVinculos}
-      accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.unlinkButton,
-        pressed && { opacity: 0.7 },
-      ]}
-    >
-      <Text style={styles.unlinkText}>
-        Pessoas com acesso ao cadastro
-      </Text>
-    </Pressable>
-  </View>
-)}
+          <View style={styles.unlinkArea}>
+            <Pressable
+              onPress={onVerVinculos}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.unlinkButton,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Text style={styles.unlinkText}>
+                Pessoas com acesso ao cadastro
+              </Text>
+            </Pressable>
+          </View>
+        )}
         {onPararAcompanhamento && (
-  <View style={styles.unlinkArea}>
-    <Pressable
-      onPress={onPararAcompanhamento}
-      accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.unlinkButton,
-        pressed && { opacity: 0.7 },
-      ]}
-    >
-      <Text style={styles.unlinkText}>
-        Parar de acompanhar
-      </Text>
-    </Pressable>
-
-    <Text style={styles.unlinkDescription}>
-      Remove somente seu vínculo com este cadastro.
-    </Text>
-  </View>
-)}
-
+          <View style={styles.unlinkArea}>
+            <Pressable
+              onPress={onPararAcompanhamento}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.unlinkButton,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Text style={styles.unlinkText}>Parar de acompanhar</Text>
+            </Pressable>
+            <Text style={styles.unlinkDescription}>
+              Remove somente seu vínculo com este cadastro.
+            </Text>
+          </View>
+        )}
         <Aviso texto="O endereço cadastrado e a presença informada não confirmam que a pessoa está em segurança." />
         {onAbrirExclusao && (
-  <Pressable
-    onPress={onAbrirExclusao}
-    accessibilityRole="button"
-    style={({ pressed }) => [
-      styles.deleteEntry,
-      pressed && { opacity: 0.6 },
-    ]}
-  >
-    <Text style={styles.deleteEntryText}>
-      Excluir cadastro
-    </Text>
-  </Pressable>
-)}
-        <Botao
-          texto="Voltar para pessoas"
-          secundario
-          onPress={onVoltar}
-        />
+          <Pressable
+            onPress={onAbrirExclusao}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.deleteEntry,
+              pressed && { opacity: 0.6 },
+            ]}
+          >
+            <Text style={styles.deleteEntryText}>Excluir cadastro</Text>
+          </Pressable>
+        )}
+        <Botao texto="Voltar para pessoas" secundario onPress={onVoltar} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 function AvatarPessoa({
   nome,
   fotoUrl,
 }: Pick<PessoaDetalhes, "nome" | "fotoUrl">) {
   const [fotoFalhou, setFotoFalhou] = useState(false);
-
   return (
     <View style={styles.avatar}>
       {fotoUrl && !fotoFalhou ? (
@@ -532,21 +404,12 @@ function AvatarPessoa({
           onError={() => setFotoFalhou(true)}
         />
       ) : (
-        <Text style={styles.initials}>
-          {obterIniciais(nome)}
-        </Text>
+        <Text style={styles.initials}>{obterIniciais(nome)}</Text>
       )}
     </View>
   );
 }
-
-function Secao({
-  titulo,
-  children,
-}: {
-  titulo: string;
-  children: ReactNode;
-}) {
+function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
     <View style={styles.card}>
       <Text style={styles.sectionTitle}>{titulo}</Text>
@@ -554,7 +417,6 @@ function Secao({
     </View>
   );
 }
-
 function Informacao({
   titulo,
   valor,
@@ -565,24 +427,14 @@ function Informacao({
   return (
     <View style={styles.information}>
       <Text style={styles.label}>{titulo}</Text>
-      <Text style={styles.body}>
-        {valor?.trim() || "Não informado"}
-      </Text>
+      <Text style={styles.body}>{valor?.trim() || "Não informado"}</Text>
     </View>
   );
 }
-
-function Etiquetas({
-  itens,
-  vazio,
-}: {
-  itens: string[];
-  vazio: string;
-}) {
+function Etiquetas({ itens, vazio }: { itens: string[]; vazio: string }) {
   if (itens.length === 0) {
     return <Text style={styles.body}>{vazio}</Text>;
   }
-
   return (
     <View style={styles.tags}>
       {itens.map((item, indice) => (
@@ -593,7 +445,6 @@ function Etiquetas({
     </View>
   );
 }
-
 function Aviso({ texto }: { texto: string }) {
   return (
     <View style={styles.notice}>
@@ -602,7 +453,6 @@ function Aviso({ texto }: { texto: string }) {
     </View>
   );
 }
-
 function Botao({
   texto,
   onPress,
@@ -623,17 +473,13 @@ function Botao({
       ]}
     >
       <Text
-        style={[
-          styles.buttonText,
-          secundario && styles.secondaryButtonText,
-        ]}
+        style={[styles.buttonText, secundario && styles.secondaryButtonText]}
       >
         {texto}
       </Text>
     </Pressable>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -862,57 +708,57 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   deleteEntry: {
-  minHeight: 48,
-  paddingHorizontal: 16,
-  paddingVertical: 14,
-  alignItems: "center",
-  justifyContent: "center",
+    minHeight: 48,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
   },
   deleteEntryText: {
-  color: "#AD3028",
-  fontSize: 14,
-  fontWeight: "600",
+    color: "#AD3028",
+    fontSize: 14,
+    fontWeight: "600",
   },
-informarButton: {
-  minHeight: 48,
-  paddingHorizontal: 16,
-  paddingVertical: 14,
-  borderRadius: 12,
-  backgroundColor: colors.primary,
-  alignItems: "center",
-  justifyContent: "center",
-  marginTop: 12,
-  marginBottom: 16,
-},
-informarButtonText: {
-  color: colors.surface,
-  fontSize: 15,
-  fontWeight: "600",
-},
-unlinkArea: {
-  gap: 8,
-  marginTop: 8,
-  marginBottom: 16,
-},
-unlinkButton: {
-  minHeight: 48,
-  paddingHorizontal: 16,
-  paddingVertical: 14,
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: colors.primary,
-  alignItems: "center",
-  justifyContent: "center",
-},
-unlinkText: {
-  fontSize: 15,
-  fontWeight: "600",
-  color: colors.primary,
-},
-unlinkDescription: {
-  fontSize: 13,
-  lineHeight: 20,
-  color: colors.textSecondary,
-  textAlign: "center",
-},
+  informarButton: {
+    minHeight: 48,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  informarButtonText: {
+    color: colors.surface,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  unlinkArea: {
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  unlinkButton: {
+    minHeight: 48,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  unlinkText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.primary,
+  },
+  unlinkDescription: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: colors.textSecondary,
+    textAlign: "center",
+  },
 });

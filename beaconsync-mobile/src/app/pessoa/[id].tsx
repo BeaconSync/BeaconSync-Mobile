@@ -3,17 +3,13 @@ import { useState } from "react";
 
 import EditarPessoaScreen from "../../screens/EditarPessoaScreen";
 import DetalhesPessoaScreen from "../../screens/DetalhaPessoaScreen";
-import { colors } from "../../theme/colors";
-
 import ExcluirPessoaScreen from "../../screens/ExcluirPessoaScreen";
-
 import InformarSituacaoScreen from "../../screens/InformarSituacaoScreen";
-
 import PararAcompanhamentoScreen from "../../screens/PararAcompanhamentoScreen";
-
 import VinculosPessoaScreen from "../../screens/VinculoPessoaScreen";
+import EnderecosPessoaScreen from "../../screens/EnderecoPessoaScreen";
+import { colors } from "../../theme/colors";
 import type { VinculoPessoa } from "../../types/vinculoPessoa";
-
 import type {
   EstadoDetalhesPessoa,
   PessoaDetalhes,
@@ -25,20 +21,9 @@ const pessoaExemplo: PessoaDetalhes = {
   dataNascimento: "1960-05-18",
   fotoUrl: null,
   vinculo: "Familiar",
-
-  necessidades: [
-    "Mobilidade reduzida",
-    "Deficiência visual",
-  ],
-
-  recursos: [
-    "Cadeira de rodas",
-    "Apoio de outra pessoa",
-  ],
-
-  observacoes:
-    "Exemplo fictício: precisa de apoio para se deslocar.",
-
+  necessidades: ["Mobilidade reduzida", "Deficiência visual"],
+  recursos: ["Cadeira de rodas", "Apoio de outra pessoa"],
+  observacoes: "Exemplo fictício: precisa de apoio para se deslocar.",
   enderecos: [
     {
       id: "endereco-exemplo",
@@ -50,16 +35,32 @@ const pessoaExemplo: PessoaDetalhes = {
       uf: "SP",
       cep: "01000-000",
       complemento: null,
-      pontoReferencia:
-        "Referência fictícia para visualizar a tela.",
+      pontoReferencia: "Referência fictícia para visualizar a tela.",
       tipoImovel: "Casa",
       andar: null,
       indicadoComoAtual: true,
       presencaInformada: null,
       presencaInformadaEm: null,
     },
+    {
+      id: "endereco-exemplo-2",
+      nomeLocal: "Casa da família · exemplo",
+      logradouro: "Rua Fictícia",
+      numero: "200",
+      bairro: "Bairro de Exemplo",
+      cidade: "Cidade de Exemplo",
+      uf: "SP",
+      cep: "01000-000",
+      complemento: "Apartamento 12",
+      distrito: null,
+      pontoReferencia: "Segundo endereço fictício para testar a edição.",
+      tipoImovel: "Apartamento",
+      andar: 1,
+      indicadoComoAtual: false,
+      presencaInformada: null,
+      presencaInformadaEm: null,
+    },
   ],
-
   situacao: null,
 };
 
@@ -87,75 +88,63 @@ export default function DetalhesPessoaRoute() {
   const [informandoSituacao, setInformandoSituacao] = useState(false);
   const [removendoVinculo, setRemovendoVinculo] = useState(false);
   const [vendoVinculos, setVendoVinculos] = useState(false);
-  
-  const { id, alertaId, alertaTitulo } =
-  useLocalSearchParams<{
+  const [vendoEnderecos, setVendoEnderecos] = useState(false);
+  const [pessoaDemonstracao, setPessoaDemonstracao] = useState(pessoaExemplo);
+
+  const { id, alertaId, alertaTitulo } = useLocalSearchParams<{
     id: string;
     alertaId?: string;
     alertaTitulo?: string;
   }>();
 
   const demonstracao = __DEV__ && id === "demonstracao";
-
   const estado: EstadoDetalhesPessoa = demonstracao
-    ? {
-        status: "sucesso",
-        pessoa: pessoaExemplo,
-      }
-    : {
-        status: "indisponivel",
-      };
+    ? { status: "sucesso", pessoa: pessoaDemonstracao }
+    : { status: "indisponivel" };
 
   function voltar() {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace("/pessoas");
-    }
+    if (router.canGoBack()) router.back();
+    else router.replace("/pessoas");
   }
 
-if (removendoVinculo && estado.status === "sucesso") {
-  return (
-    <PararAcompanhamentoScreen
-      pessoaId={estado.pessoa.id}
-      nomePessoa={estado.pessoa.nome}
-      demonstracao={demonstracao}
-      onCancelar={() => setRemovendoVinculo(false)}
-      onConcluido={() => router.replace("/pessoas")}
-    />
-  );
-}
+  if (removendoVinculo && estado.status === "sucesso") {
+    return (
+      <PararAcompanhamentoScreen
+        pessoaId={estado.pessoa.id}
+        nomePessoa={estado.pessoa.nome}
+        demonstracao={demonstracao}
+        onCancelar={() => setRemovendoVinculo(false)}
+        onConcluido={() => router.replace("/pessoas")}
+      />
+    );
+  }
 
-
-if (informandoSituacao && estado.status === "sucesso") {
-  return (
-    <InformarSituacaoScreen
-      pessoa={estado.pessoa}
-      demonstracao={demonstracao}
-      contextoAlerta={
-        alertaId
-          ? {
-              id: alertaId,
-              titulo: alertaTitulo || "Alerta selecionado",
-            }
-          : undefined
-      }
-      onVoltar={() => setInformandoSituacao(false)}
-    />
-  );
-}
+  if (informandoSituacao && estado.status === "sucesso") {
+    return (
+      <InformarSituacaoScreen
+        pessoa={estado.pessoa}
+        demonstracao={demonstracao}
+        contextoAlerta={
+          alertaId
+            ? { id: alertaId, titulo: alertaTitulo || "Alerta selecionado" }
+            : undefined
+        }
+        onVoltar={() => setInformandoSituacao(false)}
+      />
+    );
+  }
 
   if (exibindoExclusao && estado.status === "sucesso") {
-  return (
-    <ExcluirPessoaScreen
-      pessoaId={estado.pessoa.id}
-      nomePessoa={estado.pessoa.nome}
-      demonstracao={demonstracao}
-      onCancelar={() => setExibindoExclusao(false)}
-      onExcluido={() => router.replace("/pessoas")}
-    />
-  );
-}
+    return (
+      <ExcluirPessoaScreen
+        pessoaId={estado.pessoa.id}
+        nomePessoa={estado.pessoa.nome}
+        demonstracao={demonstracao}
+        onCancelar={() => setExibindoExclusao(false)}
+        onExcluido={() => router.replace("/pessoas")}
+      />
+    );
+  }
 
   if (editando && estado.status === "sucesso") {
     return (
@@ -175,72 +164,73 @@ if (informandoSituacao && estado.status === "sucesso") {
           title: "Pessoa acompanhada",
           headerBackButtonDisplayMode: "minimal",
           headerShadowVisible: false,
-
           headerLeft: undefined,
           headerBackVisible: true,
           gestureEnabled: true,
-
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
+          headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.primary,
-          headerTitleStyle: {
-            color: colors.text,
-          },
+          headerTitleStyle: { color: colors.text },
         }}
       />
 
-  <DetalhesPessoaScreen
+      <DetalhesPessoaScreen
+        estado={estado}
+        demonstracao={demonstracao}
+        onVoltar={voltar}
+        onEditar={
+          estado.status === "sucesso" ? () => setEditando(true) : undefined
+        }
+        onInformarSituacao={
+          estado.status === "sucesso"
+            ? () => setInformandoSituacao(true)
+            : undefined
+        }
+        onAbrirExclusao={
+          demonstracao && estado.status === "sucesso"
+            ? () => setExibindoExclusao(true)
+            : undefined
+        }
+        onPararAcompanhamento={
+          demonstracao && estado.status === "sucesso"
+            ? () => setRemovendoVinculo(true)
+            : undefined
+        }
+        onVerVinculos={
+          demonstracao && estado.status === "sucesso"
+            ? () => setVendoVinculos(true)
+            : undefined
+        }
+        onGerenciarEnderecos={
+          estado.status === "sucesso"
+            ? () => setVendoEnderecos(true)
+            : undefined
+        }
+      />
 
-  onVerVinculos={
-  demonstracao && estado.status === "sucesso"
-    ? () => setVendoVinculos(true)
-    : undefined
-}
-
-  onPararAcompanhamento={
-  demonstracao && estado.status === "sucesso"
-    ? () => setRemovendoVinculo(true)
-    : undefined
-}
-  estado={estado}
-  demonstracao={demonstracao}
-  onVoltar={voltar}
-  onEditar={
-    estado.status === "sucesso"
-      ? () => setEditando(true)
-      : undefined
-  }
-  onAbrirExclusao={
-    demonstracao && estado.status === "sucesso"
-      ? () => setExibindoExclusao(true)
-      : undefined
-  }
-  onInformarSituacao={
-  estado.status === "sucesso"
-    ? () => setInformandoSituacao(true)
-    : undefined
-}
-/>
-
-{vendoVinculos && estado.status === "sucesso" && (
-  <VinculosPessoaScreen
-    nomePessoa={estado.pessoa.nome}
-    estado={
-      demonstracao
-        ? {
-            status: "sucesso",
-            vinculos: vinculosExemplo,
+      {vendoVinculos && estado.status === "sucesso" && (
+        <VinculosPessoaScreen
+          nomePessoa={estado.pessoa.nome}
+          estado={
+            demonstracao
+              ? { status: "sucesso", vinculos: vinculosExemplo }
+              : { status: "indisponivel" }
           }
-        : {
-            status: "indisponivel",
-          }
-    }
-    demonstracao={demonstracao}
-    onFechar={() => setVendoVinculos(false)}
-  />
-)}
+          demonstracao={demonstracao}
+          onFechar={() => setVendoVinculos(false)}
+        />
+      )}
 
+      {vendoEnderecos && estado.status === "sucesso" && (
+        <EnderecosPessoaScreen
+          key={estado.pessoa.id}
+          pessoa={estado.pessoa}
+          demonstracao={demonstracao}
+          onFechar={() => setVendoEnderecos(false)}
+          onAtualizados={(enderecos) => {
+            setPessoaDemonstracao((atual) => ({ ...atual, enderecos }));
+          }}
+        />
+      )}
     </>
   );
 }
