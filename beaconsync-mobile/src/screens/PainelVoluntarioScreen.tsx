@@ -20,9 +20,15 @@ import {
   SafeAreaView,
 } from "react-native-safe-area-context";
 
+import MapaMonitoramentoScreen from "./MapaMonitoramentoScreen";
+
 import { useDisponibilidadeVoluntario } from "../hooks/useDisponibilidadeVoluntario";
 import { useVoluntarioForm } from "../hooks/useVoluntarioForm";
 import { colors } from "../theme/colors";
+
+import type {
+  EstadoMonitoramento,
+} from "../types/monitoramento";
 
 import {
   especialidadesVoluntario,
@@ -41,6 +47,9 @@ type Props = {
   onAtualizarDisponibilidade?: AtualizarDisponibilidadeVoluntario;
   onSalvarEdicao?: SalvarDadosVoluntario;
   onTentarNovamente?: () => void;
+
+  estadoMapa?: EstadoMonitoramento;
+  onAtualizarMapa?: () => void;
 };
 
 function formatarData(valor: string | null) {
@@ -70,8 +79,11 @@ export default function PainelVoluntarioScreen({
   onAtualizarDisponibilidade,
   onSalvarEdicao,
   onTentarNovamente,
+  estadoMapa,
+  onAtualizarMapa,
 }: Props) {
   const [editando, setEditando] = useState(false);
+  const [vendoMapa, setVendoMapa] = useState(false);
 
   const disponibilidade = useDisponibilidadeVoluntario(
     onAtualizarDisponibilidade
@@ -92,7 +104,9 @@ export default function PainelVoluntarioScreen({
           );
 
           if (atualizado?.id !== voluntario.id) {
-            throw new Error("Resposta de atualização inválida.");
+            throw new Error(
+              "Resposta de atualização inválida."
+            );
           }
 
           onAtualizado(atualizado);
@@ -110,6 +124,11 @@ export default function PainelVoluntarioScreen({
     if (bloqueado) return;
 
     Keyboard.dismiss();
+
+    if (vendoMapa) {
+      setVendoMapa(false);
+      return;
+    }
 
     if (editando) {
       setEditando(false);
@@ -165,9 +184,11 @@ export default function PainelVoluntarioScreen({
         >
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
-              {editando
-                ? "Editar voluntariado"
-                : "Meu voluntariado"}
+              {vendoMapa
+                ? "Mapa de apoio"
+                : editando
+                  ? "Editar voluntariado"
+                  : "Meu voluntariado"}
             </Text>
 
             <Pressable
@@ -180,389 +201,445 @@ export default function PainelVoluntarioScreen({
               ]}
             >
               <Text style={styles.closeText}>
-                {editando ? "Cancelar" : "Fechar"}
+                {vendoMapa
+                  ? "Voltar"
+                  : editando
+                    ? "Cancelar"
+                    : "Fechar"}
               </Text>
             </Pressable>
           </View>
 
-          <ScrollView
-            key={editando ? "edicao" : "painel"}
-            style={styles.scroll}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            automaticallyAdjustKeyboardInsets
-            showsVerticalScrollIndicator={false}
-          >
-            {demonstracao && (
-              <View style={styles.infoBox}>
-                <Text style={styles.infoText}>
-                  Prévia de desenvolvimento: este cadastro
-                  é fictício. As alterações ainda não podem
-                  ser gravadas.
-                </Text>
-              </View>
-            )}
+          {vendoMapa ? (
+            <MapaMonitoramentoScreen
+              demonstracao={demonstracao}
+              estado={estadoMapa}
+              onAtualizar={onAtualizarMapa}
+            />
+          ) : (
+            <ScrollView
+              key={editando ? "edicao" : "painel"}
+              style={styles.scroll}
+              contentContainerStyle={styles.content}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              automaticallyAdjustKeyboardInsets
+              showsVerticalScrollIndicator={false}
+            >
+              {demonstracao && (
+                <View style={styles.infoBox}>
+                  <Text style={styles.infoText}>
+                    Prévia de desenvolvimento: este cadastro
+                    é fictício. As alterações ainda não podem
+                    ser gravadas.
+                  </Text>
+                </View>
+              )}
 
-            {voluntario ? (
-              editando ? (
-                <>
-                  <View style={styles.section}>
-                    <Text style={styles.title}>
-                      Atualize suas informações
-                    </Text>
+              {voluntario ? (
+                editando ? (
+                  <>
+                    <View style={styles.section}>
+                      <Text style={styles.title}>
+                        Atualize suas informações
+                      </Text>
 
-                    <Text style={styles.description}>
-                      Revise seu contato, sua região de atuação
-                      e como você deseja ajudar.
-                    </Text>
-                  </View>
+                      <Text style={styles.description}>
+                        Revise seu contato, sua região de
+                        atuação e como você deseja ajudar.
+                      </Text>
+                    </View>
 
-                  <Campo
-                    rotulo="Telefone de contato"
-                    value={dados.telefone}
-                    onChangeText={(valor) =>
-                      formulario.alterarCampo("telefone", valor)
-                    }
-                    editable={!bloqueado}
-                    keyboardType="phone-pad"
-                    autoComplete="tel"
-                    maxLength={25}
-                    placeholder="(11) 99999-9999"
-                  />
-
-                  <Campo
-                    rotulo="Cidade de atuação"
-                    value={dados.cidade}
-                    onChangeText={(valor) =>
-                      formulario.alterarCampo("cidade", valor)
-                    }
-                    editable={!bloqueado}
-                    autoCapitalize="words"
-                    maxLength={100}
-                    placeholder="Nome da cidade"
-                  />
-
-                  <Campo
-                    rotulo="Estado (UF)"
-                    value={dados.uf}
-                    onChangeText={(valor) =>
-                      formulario.alterarCampo(
-                        "uf",
-                        valor
-                          .replace(/[^a-z]/gi, "")
-                          .toUpperCase()
-                          .slice(0, 2)
-                      )
-                    }
-                    editable={!bloqueado}
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                    maxLength={2}
-                    placeholder="Ex.: SP"
-                  />
-
-                  <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>
-                      Área principal de atuação
-                    </Text>
-
-                    {especialidadesVoluntario.map((opcao) => {
-                      const selecionada =
-                        dados.especialidade === opcao;
-
-                      return (
-                        <Pressable
-                          key={opcao}
-                          onPress={() =>
-                            formulario.alterarCampo(
-                              "especialidade",
-                              opcao
-                            )
-                          }
-                          disabled={bloqueado}
-                          accessibilityRole="radio"
-                          accessibilityState={{
-                            checked: selecionada,
-                            disabled: bloqueado,
-                          }}
-                          style={({ pressed }) => [
-                            styles.option,
-                            selecionada && styles.optionSelected,
-                            (pressed || bloqueado) &&
-                              styles.disabled,
-                          ]}
-                        >
-                          <View
-                            style={[
-                              styles.radio,
-                              selecionada && styles.radioSelected,
-                            ]}
-                          >
-                            {selecionada && (
-                              <View style={styles.radioDot} />
-                            )}
-                          </View>
-
-                          <Text style={styles.optionText}>
-                            {opcao}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-
-                  {dados.especialidade === "Outro" && (
                     <Campo
-                      rotulo="Como você pode ajudar?"
-                      value={dados.outraEspecialidade}
+                      rotulo="Telefone de contato"
+                      value={dados.telefone}
                       onChangeText={(valor) =>
                         formulario.alterarCampo(
-                          "outraEspecialidade",
+                          "telefone",
                           valor
                         )
                       }
                       editable={!bloqueado}
-                      maxLength={150}
-                      placeholder="Descreva sua área de apoio"
+                      keyboardType="phone-pad"
+                      autoComplete="tel"
+                      maxLength={25}
+                      placeholder="(11) 99999-9999"
                     />
-                  )}
 
-                  <View style={styles.card}>
-                    <View style={styles.availabilityRow}>
-                      <Text style={styles.availabilityTitle}>
-                        Disponível para ajudar
+                    <Campo
+                      rotulo="Cidade de atuação"
+                      value={dados.cidade}
+                      onChangeText={(valor) =>
+                        formulario.alterarCampo(
+                          "cidade",
+                          valor
+                        )
+                      }
+                      editable={!bloqueado}
+                      autoCapitalize="words"
+                      maxLength={100}
+                      placeholder="Nome da cidade"
+                    />
+
+                    <Campo
+                      rotulo="Estado (UF)"
+                      value={dados.uf}
+                      onChangeText={(valor) =>
+                        formulario.alterarCampo(
+                          "uf",
+                          valor
+                            .replace(/[^a-z]/gi, "")
+                            .toUpperCase()
+                            .slice(0, 2)
+                        )
+                      }
+                      editable={!bloqueado}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      maxLength={2}
+                      placeholder="Ex.: SP"
+                    />
+
+                    <View style={styles.section}>
+                      <Text style={styles.sectionTitle}>
+                        Área principal de atuação
                       </Text>
 
-                      <Switch
-                        value={dados.disponivel}
-                        onValueChange={(valor) =>
+                      {especialidadesVoluntario.map(
+                        (opcao) => {
+                          const selecionada =
+                            dados.especialidade === opcao;
+
+                          return (
+                            <Pressable
+                              key={opcao}
+                              onPress={() =>
+                                formulario.alterarCampo(
+                                  "especialidade",
+                                  opcao
+                                )
+                              }
+                              disabled={bloqueado}
+                              accessibilityRole="radio"
+                              accessibilityState={{
+                                checked: selecionada,
+                                disabled: bloqueado,
+                              }}
+                              style={({ pressed }) => [
+                                styles.option,
+                                selecionada &&
+                                  styles.optionSelected,
+                                (pressed || bloqueado) &&
+                                  styles.disabled,
+                              ]}
+                            >
+                              <View
+                                style={[
+                                  styles.radio,
+                                  selecionada &&
+                                    styles.radioSelected,
+                                ]}
+                              >
+                                {selecionada && (
+                                  <View
+                                    style={styles.radioDot}
+                                  />
+                                )}
+                              </View>
+
+                              <Text style={styles.optionText}>
+                                {opcao}
+                              </Text>
+                            </Pressable>
+                          );
+                        }
+                      )}
+                    </View>
+
+                    {dados.especialidade === "Outro" && (
+                      <Campo
+                        rotulo="Como você pode ajudar?"
+                        value={dados.outraEspecialidade}
+                        onChangeText={(valor) =>
                           formulario.alterarCampo(
-                            "disponivel",
+                            "outraEspecialidade",
                             valor
                           )
                         }
-                        disabled={bloqueado}
-                        accessibilityLabel="Disponível para ajudar"
-                        trackColor={{
-                          false: colors.border,
-                          true: colors.primary,
-                        }}
+                        editable={!bloqueado}
+                        maxLength={150}
+                        placeholder="Descreva sua área de apoio"
                       />
-                    </View>
-
-                    <Text style={styles.description}>
-                      Esta alteração será enviada junto com
-                      os demais dados ao salvar.
-                    </Text>
-                  </View>
-
-                  <Campo
-                    rotulo="Observações (opcional)"
-                    value={dados.observacoes}
-                    onChangeText={(valor) =>
-                      formulario.alterarCampo("observacoes", valor)
-                    }
-                    editable={!bloqueado}
-                    multiline
-                    maxLength={500}
-                    textAlignVertical="top"
-                    placeholder="Ex.: disponibilidade aos finais de semana."
-                    style={styles.multiline}
-                  />
-
-                  {formulario.erro && (
-                    <MensagemErro texto={formulario.erro} />
-                  )}
-
-                  <Pressable
-                    onPress={salvarEdicao}
-                    disabled={bloqueado}
-                    accessibilityRole="button"
-                    accessibilityState={{
-                      disabled: bloqueado,
-                      busy: formulario.enviando,
-                    }}
-                    style={({ pressed }) => [
-                      styles.button,
-                      (pressed || bloqueado) && styles.disabled,
-                    ]}
-                  >
-                    {formulario.enviando && (
-                      <ActivityIndicator color={colors.surface} />
                     )}
 
-                    <Text style={styles.buttonText}>
-                      {formulario.enviando
-                        ? "Salvando..."
-                        : "Salvar alterações"}
-                    </Text>
-                  </Pressable>
-                </>
-              ) : (
-                <>
-                  <View style={styles.section}>
-                    <Text style={styles.title}>
-                      Olá, {nomeUsuario}
-                    </Text>
-
-                    <Text style={styles.description}>
-                      Consulte suas informações e mantenha
-                      sua disponibilidade atualizada.
-                    </Text>
-                  </View>
-
-                  <View style={styles.card}>
-                    <View style={styles.availabilityRow}>
-                      <Text style={styles.availabilityTitle}>
-                        Disponível para ajudar
-                      </Text>
-
-                      <Switch
-                        value={voluntario.disponivel}
-                        onValueChange={alterarDisponibilidade}
-                        disabled={bloqueado}
-                        accessibilityLabel="Disponível para ajudar"
-                        accessibilityState={{
-                          disabled: bloqueado,
-                          busy: disponibilidade.enviando,
-                        }}
-                        trackColor={{
-                          false: colors.border,
-                          true: colors.primary,
-                        }}
-                      />
-                    </View>
-
-                    <Text style={styles.description}>
-                      {voluntario.disponivel
-                        ? "Sua disponibilidade está registrada como ativa."
-                        : "Você informou que não está disponível no momento."}
-                    </Text>
-
-                    {disponibilidade.enviando && (
-                      <View style={styles.loadingRow}>
-                        <ActivityIndicator
-                          color={colors.primary}
-                        />
-
-                        <Text style={styles.description}>
-                          Atualizando disponibilidade...
+                    <View style={styles.card}>
+                      <View style={styles.availabilityRow}>
+                        <Text
+                          style={styles.availabilityTitle}
+                        >
+                          Disponível para ajudar
                         </Text>
+
+                        <Switch
+                          value={dados.disponivel}
+                          onValueChange={(valor) =>
+                            formulario.alterarCampo(
+                              "disponivel",
+                              valor
+                            )
+                          }
+                          disabled={bloqueado}
+                          accessibilityLabel="Disponível para ajudar"
+                          trackColor={{
+                            false: colors.border,
+                            true: colors.primary,
+                          }}
+                        />
                       </View>
-                    )}
 
-                    {disponibilidade.erro && (
-                      <MensagemErro
-                        texto={disponibilidade.erro}
-                      />
-                    )}
-                  </View>
+                      <Text style={styles.description}>
+                        Esta alteração será enviada junto
+                        com os demais dados ao salvar.
+                      </Text>
+                    </View>
 
-                  <View style={styles.card}>
-                    <Text style={styles.sectionTitle}>
-                      Região de atuação
-                    </Text>
-
-                    <Informacao
-                      rotulo="Cidade"
-                      valor={voluntario.cidade}
-                    />
-
-                    <Informacao
-                      rotulo="Estado"
-                      valor={voluntario.uf}
-                    />
-                  </View>
-
-                  <View style={styles.card}>
-                    <Text style={styles.sectionTitle}>
-                      Como você pode ajudar
-                    </Text>
-
-                    <Informacao
-                      rotulo="Área principal"
-                      valor={
-                        voluntario.especialidade === "Outro"
-                          ? voluntario.outraEspecialidade ||
-                            "Outra área não especificada"
-                          : voluntario.especialidade
+                    <Campo
+                      rotulo="Observações (opcional)"
+                      value={dados.observacoes}
+                      onChangeText={(valor) =>
+                        formulario.alterarCampo(
+                          "observacoes",
+                          valor
+                        )
                       }
+                      editable={!bloqueado}
+                      multiline
+                      maxLength={500}
+                      textAlignVertical="top"
+                      placeholder="Ex.: disponibilidade aos finais de semana."
+                      style={styles.multiline}
                     />
 
-                    <Informacao
-                      rotulo="Telefone de contato"
-                      valor={voluntario.telefone}
-                    />
-
-                    {voluntario.observacoes.trim() ? (
-                      <Informacao
-                        rotulo="Observações"
-                        valor={voluntario.observacoes}
+                    {formulario.erro && (
+                      <MensagemErro
+                        texto={formulario.erro}
                       />
-                    ) : null}
-                  </View>
+                    )}
 
-                  <Pressable
-                    onPress={iniciarEdicao}
-                    disabled={bloqueado}
-                    accessibilityRole="button"
-                    style={({ pressed }) => [
-                      styles.editButton,
-                      (pressed || bloqueado) && styles.disabled,
-                    ]}
-                  >
-                    <Text style={styles.editText}>
-                      Editar voluntariado
-                    </Text>
-                  </Pressable>
-
-                  <Text style={styles.updatedText}>
-                    Última atualização:{" "}
-                    {formatarData(voluntario.atualizadoEm)}
-                  </Text>
-                </>
-              )
-            ) : (
-              <View style={styles.card}>
-                {estado.status === "carregando" && (
-                  <ActivityIndicator
-                    size="large"
-                    color={colors.primary}
-                  />
-                )}
-
-                <Text style={styles.sectionTitle}>
-                  {estado.status === "carregando"
-                    ? "Carregando cadastro"
-                    : estado.status === "erro"
-                      ? "Não foi possível carregar"
-                      : "Informações indisponíveis"}
-                </Text>
-
-                <Text style={styles.description}>
-                  {estado.status === "carregando"
-                    ? "Aguarde enquanto buscamos suas informações."
-                    : estado.status === "erro"
-                      ? estado.mensagem
-                      : "Ainda não foi possível consultar seu cadastro de voluntário."}
-                </Text>
-
-                {estado.status === "erro" &&
-                  onTentarNovamente && (
                     <Pressable
-                      onPress={onTentarNovamente}
+                      onPress={salvarEdicao}
+                      disabled={bloqueado}
                       accessibilityRole="button"
-                      style={styles.button}
+                      accessibilityState={{
+                        disabled: bloqueado,
+                        busy: formulario.enviando,
+                      }}
+                      style={({ pressed }) => [
+                        styles.button,
+                        (pressed || bloqueado) &&
+                          styles.disabled,
+                      ]}
                     >
+                      {formulario.enviando && (
+                        <ActivityIndicator
+                          color={colors.surface}
+                        />
+                      )}
+
                       <Text style={styles.buttonText}>
-                        Tentar novamente
+                        {formulario.enviando
+                          ? "Salvando..."
+                          : "Salvar alterações"}
                       </Text>
                     </Pressable>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.section}>
+                      <Text style={styles.title}>
+                        Olá, {nomeUsuario}
+                      </Text>
+
+                      <Text style={styles.description}>
+                        Consulte suas informações e mantenha
+                        sua disponibilidade atualizada.
+                      </Text>
+                    </View>
+
+                    <View style={styles.card}>
+                      <View style={styles.availabilityRow}>
+                        <Text
+                          style={styles.availabilityTitle}
+                        >
+                          Disponível para ajudar
+                        </Text>
+
+                        <Switch
+                          value={voluntario.disponivel}
+                          onValueChange={
+                            alterarDisponibilidade
+                          }
+                          disabled={bloqueado}
+                          accessibilityLabel="Disponível para ajudar"
+                          accessibilityState={{
+                            disabled: bloqueado,
+                            busy: disponibilidade.enviando,
+                          }}
+                          trackColor={{
+                            false: colors.border,
+                            true: colors.primary,
+                          }}
+                        />
+                      </View>
+
+                      <Text style={styles.description}>
+                        {voluntario.disponivel
+                          ? "Sua disponibilidade está registrada como ativa."
+                          : "Você informou que não está disponível no momento."}
+                      </Text>
+
+                      {disponibilidade.enviando && (
+                        <View style={styles.loadingRow}>
+                          <ActivityIndicator
+                            color={colors.primary}
+                          />
+
+                          <Text style={styles.description}>
+                            Atualizando disponibilidade...
+                          </Text>
+                        </View>
+                      )}
+
+                      {disponibilidade.erro && (
+                        <MensagemErro
+                          texto={disponibilidade.erro}
+                        />
+                      )}
+                    </View>
+
+                    <View style={styles.card}>
+                      <Text style={styles.sectionTitle}>
+                        Região de atuação
+                      </Text>
+
+                      <Informacao
+                        rotulo="Cidade"
+                        valor={voluntario.cidade}
+                      />
+
+                      <Informacao
+                        rotulo="Estado"
+                        valor={voluntario.uf}
+                      />
+                    </View>
+
+                    <View style={styles.card}>
+                      <Text style={styles.sectionTitle}>
+                        Como você pode ajudar
+                      </Text>
+
+                      <Informacao
+                        rotulo="Área principal"
+                        valor={
+                          voluntario.especialidade === "Outro"
+                            ? voluntario.outraEspecialidade ||
+                              "Outra área não especificada"
+                            : voluntario.especialidade
+                        }
+                      />
+
+                      <Informacao
+                        rotulo="Telefone de contato"
+                        valor={voluntario.telefone}
+                      />
+
+                      {voluntario.observacoes.trim() ? (
+                        <Informacao
+                          rotulo="Observações"
+                          valor={voluntario.observacoes}
+                        />
+                      ) : null}
+                    </View>
+
+                    <Pressable
+                      onPress={() => setVendoMapa(true)}
+                      disabled={bloqueado}
+                      accessibilityRole="button"
+                      style={({ pressed }) => [
+                        styles.button,
+                        (pressed || bloqueado) &&
+                          styles.disabled,
+                      ]}
+                    >
+                      <Text style={styles.buttonText}>
+                        Abrir mapa de apoio
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={iniciarEdicao}
+                      disabled={bloqueado}
+                      accessibilityRole="button"
+                      style={({ pressed }) => [
+                        styles.editButton,
+                        (pressed || bloqueado) &&
+                          styles.disabled,
+                      ]}
+                    >
+                      <Text style={styles.editText}>
+                        Editar voluntariado
+                      </Text>
+                    </Pressable>
+
+                    <Text style={styles.updatedText}>
+                      Última atualização:{" "}
+                      {formatarData(
+                        voluntario.atualizadoEm
+                      )}
+                    </Text>
+                  </>
+                )
+              ) : (
+                <View style={styles.card}>
+                  {estado.status === "carregando" && (
+                    <ActivityIndicator
+                      size="large"
+                      color={colors.primary}
+                    />
                   )}
-              </View>
-            )}
-          </ScrollView>
+
+                  <Text style={styles.sectionTitle}>
+                    {estado.status === "carregando"
+                      ? "Carregando cadastro"
+                      : estado.status === "erro"
+                        ? "Não foi possível carregar"
+                        : "Informações indisponíveis"}
+                  </Text>
+
+                  <Text style={styles.description}>
+                    {estado.status === "carregando"
+                      ? "Aguarde enquanto buscamos suas informações."
+                      : estado.status === "erro"
+                        ? estado.mensagem
+                        : "Ainda não foi possível consultar seu cadastro de voluntário."}
+                  </Text>
+
+                  {estado.status === "erro" &&
+                    onTentarNovamente && (
+                      <Pressable
+                        onPress={onTentarNovamente}
+                        accessibilityRole="button"
+                        style={styles.button}
+                      >
+                        <Text style={styles.buttonText}>
+                          Tentar novamente
+                        </Text>
+                      </Pressable>
+                    )}
+                </View>
+              )}
+            </ScrollView>
+          )}
         </SafeAreaView>
       </SafeAreaProvider>
     </Modal>
@@ -573,7 +650,11 @@ type CampoProps = TextInputProps & {
   rotulo: string;
 };
 
-function Campo({ rotulo, style, ...props }: CampoProps) {
+function Campo({
+  rotulo,
+  style,
+  ...props
+}: CampoProps) {
   return (
     <View style={styles.section}>
       <Text style={styles.label}>{rotulo}</Text>
