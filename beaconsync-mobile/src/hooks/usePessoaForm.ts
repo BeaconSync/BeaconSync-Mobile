@@ -178,7 +178,11 @@ function validarEtapa(
 export function usePessoaForm(
   onCadastrar?: EnviarCadastroPessoa,
   valoresIniciais?: DadosCadastroPessoa,
-  editando = false
+  editando = false,
+  validarAdicional?: (
+    dados: DadosCadastroPessoa,
+    etapa: EtapaCadastro
+  ) => ErrosCadastroPessoa
 ) {
   const [dados, setDados] = useState<DadosCadastroPessoa>(() => {
     const valores = valoresIniciais ?? dadosIniciais;
@@ -243,7 +247,10 @@ function alternarSelecao(
 }
 
   function avancar() {
-    const novosErros = validarEtapa(dados, etapa);
+    const novosErros: ErrosCadastroPessoa = {
+  ...validarEtapa(dados, etapa),
+  ...(validarAdicional?.(dados, etapa) ?? {}),
+};
     setErros(novosErros);
 
     if (Object.keys(novosErros).length > 0) return false;
@@ -271,7 +278,10 @@ function alternarSelecao(
     setErroEnvio(null);
 
     for (const numero of [1, 2, 3] as const) {
-      const novosErros = validarEtapa(dados, numero);
+      const novosErros: ErrosCadastroPessoa = {
+      ...validarEtapa(dados, numero),
+      ...(validarAdicional?.(dados, numero) ?? {}),
+      };
 
       if (Object.keys(novosErros).length > 0) {
         setEtapa(numero);
@@ -306,12 +316,17 @@ if (!onCadastrar) {
       });
 
       return true;
-    } catch {
-      setErroEnvio(
-        "Não foi possível confirmar o cadastro. Seus dados continuam preenchidos."
-      );
-      return false;
-    } finally {
+    } catch (erro) {
+  setErroEnvio(
+    erro instanceof Error
+      ? erro.message
+      : editando
+        ? "Não foi possível confirmar as alterações. Seus dados continuam preenchidos."
+        : "Não foi possível confirmar o cadastro. Seus dados continuam preenchidos."
+  );
+
+  return false;
+}finally {
       envioEmAndamento.current = false;
       setEnviando(false);
     }

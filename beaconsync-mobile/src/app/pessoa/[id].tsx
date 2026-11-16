@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 
+import { useDetalhesPessoa } from "../../hooks/useDetalhesPessoa";
 import EditarPessoaScreen from "../../screens/EditarPessoaScreen";
 import DetalhesPessoaScreen from "../../screens/DetalhaPessoaScreen";
 import ExcluirPessoaScreen from "../../screens/ExcluirPessoaScreen";
@@ -97,10 +98,18 @@ export default function DetalhesPessoaRoute() {
     alertaTitulo?: string;
   }>();
 
-  const demonstracao = __DEV__ && id === "demonstracao";
-  const estado: EstadoDetalhesPessoa = demonstracao
-    ? { status: "sucesso", pessoa: pessoaDemonstracao }
-    : { status: "indisponivel" };
+ const demonstracao = __DEV__ && id === "demonstracao";
+
+const { estado: estadoReal } = useDetalhesPessoa(
+  demonstracao ? undefined : id
+);
+
+const estado: EstadoDetalhesPessoa = demonstracao
+  ? {
+      status: "sucesso",
+      pessoa: pessoaExemplo,
+    }
+  : estadoReal;
 
   function voltar() {
     if (router.canGoBack()) router.back();

@@ -209,7 +209,7 @@ export default function DetalhesPessoaScreen({
             style={[styles.statusBadge, { backgroundColor: fundoSituacao }]}
           >
             <Text style={[styles.statusText, { color: corSituacao }]}>
-              {situacao?.status ?? "Não informada"}
+              {situacao?.status ?? "Não disponível"}
             </Text>
           </View>
           {situacao ? (
@@ -231,7 +231,7 @@ export default function DetalhesPessoaScreen({
             </>
           ) : (
             <Text style={styles.body}>
-              Nenhuma situação foi informada para esta pessoa.
+              A situação da pessoa não está disponível nesta consulta.
             </Text>
           )}
         </Secao>

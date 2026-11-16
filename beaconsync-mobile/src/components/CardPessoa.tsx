@@ -40,7 +40,7 @@ export default function CardPessoa({
           <MapPin size={15} color={colors.textSecondary} />
 
           <Text style={styles.locationText}>
-            {pessoa.localAtual || "Localização não informada"}
+            {pessoa.localAtual || "Endereço de referência não informado"}
           </Text>
         </View>
       </View>

@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
+import { usePessoasAcompanhadas } from "../../hooks/usePessoasAcompanhadas";
 import MenuTestes from "../../components/MenuTestes";
 import MinhasSolicitacoesScreen from "../../screens/MinhasSolicitacoesScreen";
 import PessoasScreen from "../../screens/PessoasScreen";
@@ -73,7 +74,9 @@ const minhasSolicitacoesExemplo: SolicitacaoVinculoEnviada[] = [
 ];
 
 export default function PessoasRoute() {
+
   const router = useRouter();
+  const { estado, recarregar } = usePessoasAcompanhadas();
 
   const [solicitandoVinculo, setSolicitandoVinculo] =
     useState(false);
@@ -109,10 +112,11 @@ export default function PessoasRoute() {
   return (
     <View style={styles.container}>
       <PessoasScreen
-        estado={{ status: "indisponivel" }}
-        onCadastrar={() => router.push("/cadastrar-pessoa")}
-        onAbrirPessoa={(pessoa) => abrirPessoa(pessoa.id)}
-      />
+          estado={estado}
+          onTentarNovamente={recarregar}
+          onCadastrar={() => router.push("/cadastrar-pessoa")}
+          onAbrirPessoa={(pessoa) => abrirPessoa(pessoa.id)}
+        />
 
       {__DEV__ && (
         <MenuTestes
