@@ -44,10 +44,12 @@ import type {
   DadosCadastroPessoa,
   EnviarCadastroPessoa,
 } from "../types/cadastroPessoa";
+import CamposCadastroJava from "../components/CamposCadastroJava";
+import { validarCadastroJava } from "../utils/validarCadatroJava";
 
 type Props = {
   onCadastrar?: EnviarCadastroPessoa;
-
+  integracaoJava?: boolean;
   edicao?: {
     dados: DadosCadastroPessoa;
     onCancelar: () => void;
@@ -109,8 +111,10 @@ function obterIniciais(nome: string) {
 export default function CadastroPessoaScreen({
   onCadastrar,
   edicao,
+  integracaoJava = false,
 }: Props) {
   const router = useRouter();
+  const cadastroJava = integracaoJava && !edicao;
 
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const selecionandoFoto = useRef(false);
@@ -131,10 +135,11 @@ export default function CadastroPessoaScreen({
     avancar,
     voltar,
     enviar,
-  } = usePessoaForm(
+    } = usePessoaForm(
     edicao ? edicao.onSalvar : onCadastrar,
     edicao?.dados,
-   Boolean(edicao)
+    Boolean(edicao),
+    cadastroJava ? validarCadastroJava : undefined
   );
 
   const bloqueado = enviando || escolhendoFoto;
@@ -511,6 +516,16 @@ function voltarEtapa() {
                   10
                 )}
 
+                {cadastroJava && (
+                 <CamposCadastroJava
+                   etapa={etapa}
+                   dados={dados}
+                   erros={erros}
+                   desabilitado={bloqueado}
+                   onAlterar={alterarCampo}
+                 />
+               )}
+
                 <Escolhas
                   titulo="Qual é o seu vínculo com a pessoa?"
                   opcoes={vinculos}
@@ -529,6 +544,16 @@ function voltarEtapa() {
 
             {etapa === 2 && (
               <>
+                {cadastroJava && (
+                 <CamposCadastroJava
+                   etapa={etapa}
+                   dados={dados}
+                   erros={erros}
+                   desabilitado={bloqueado}
+                   onAlterar={alterarCampo}
+                 />
+               )}
+
                 <Escolhas
                   titulo="Selecione todas as opções necessárias."
                   opcoes={necessidades}
@@ -581,6 +606,17 @@ function voltarEtapa() {
 
             {etapa === 3 && (
               <>
+
+                {cadastroJava && (
+                 <CamposCadastroJava
+                   etapa={etapa}
+                   dados={dados}
+                   erros={erros}
+                   desabilitado={bloqueado}
+                   onAlterar={alterarCampo}
+                 />
+               )}
+
                 {campo(
                   "nomeLocal",
                   "Nome do local",

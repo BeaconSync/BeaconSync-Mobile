@@ -3,6 +3,9 @@ export type DadosCadastroPessoa = {
   dataNascimento: string;
   vinculo: string;
   fotoUri?: string | null;
+  cpf?: string;
+  tipoVulnerabilidade?: TipoVulnerabilidadeJava | "";
+  distritoId?: number | null;
 
   necessidades: string[];
   outraNecessidade: string;
@@ -22,6 +25,13 @@ export type DadosCadastroPessoa = {
   localizacaoConfirmada: boolean | null;
   autorizado: boolean;
 };
+
+export type TipoVulnerabilidadeJava =
+  | "ACAMADO"
+  | "PESSOA_COM_DEFICIENCIA"
+  | "BEBE"
+  | "DEPENDENTE_APARELHO_MEDICO"
+  | "OUTRO";
 
 export type ErrosCadastroPessoa = Partial<
   Record<keyof DadosCadastroPessoa, string>
