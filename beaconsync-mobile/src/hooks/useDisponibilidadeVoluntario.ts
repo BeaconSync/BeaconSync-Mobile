@@ -46,12 +46,15 @@ export function useDisponibilidadeVoluntario(
       }
 
       return atualizado;
-    } catch {
-      setErro(
-        "Não foi possível confirmar a atualização. Consulte novamente seu cadastro antes de tentar outra vez."
-      );
-      return null;
-    } finally {
+    } catch (erro) {
+  setErro(
+    erro instanceof Error
+      ? erro.message
+      : "Não foi possível confirmar a atualização. Consulte novamente seu cadastro antes de tentar outra vez.",
+  );
+
+  return null;
+} finally {
       envioEmAndamento.current = false;
       setEnviando(false);
     }

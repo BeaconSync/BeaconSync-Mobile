@@ -237,7 +237,7 @@ export default function PerfilScreen({
           ]}
         >
           <Text style={styles.loginText}>
-            Voltar para o login
+            Sair da conta
           </Text>
         </Pressable>
       </ScrollView>

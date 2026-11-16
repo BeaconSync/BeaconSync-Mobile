@@ -149,14 +149,17 @@ export function useVoluntarioForm(
 
       setConcluido(true);
       return true;
-    } catch {
-      setErro(
-        edicao
-          ? "Não foi possível confirmar a atualização. Seus dados continuam preenchidos."
-          : "Não foi possível confirmar o cadastro. Seus dados continuam preenchidos."
-      );
-      return false;
-    } finally {
+   } catch (erro) {
+  setErro(
+    erro instanceof Error
+      ? erro.message
+      : edicao
+        ? "Não foi possível confirmar a atualização. Seus dados continuam preenchidos."
+        : "Não foi possível confirmar o cadastro. Seus dados continuam preenchidos.",
+  );
+
+  return false;
+} finally {
       envioEmAndamento.current = false;
       setEnviando(false);
     }
