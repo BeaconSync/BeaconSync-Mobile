@@ -2,6 +2,10 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
+import {
+  useMeuPerfil,
+} from "../../hooks/useMeuPerfil";
+
 import MenuTestes from "../../components/MenuTestes";
 import InicioScreen from "../../screens/InicioScreen";
 import MinhasSolicitacoesScreen from "../../screens/MinhasSolicitacoesScreen";
@@ -28,6 +32,8 @@ type CenarioInicio =
 type PainelAberto = "enviadas" | "recebidas" | null;
 
 export default function Inicio() {
+  
+
   const router = useRouter();
 
   const [cenario, setCenario] =
@@ -43,6 +49,10 @@ export default function Inicio() {
 
   const cenarioAtual = __DEV__ ? cenario : "normal";
   const demonstracao = cenarioAtual !== "normal";
+
+  const {
+  estado: estadoPerfil,
+} = useMeuPerfil(!demonstracao);
 
   let estadoPessoas: EstadoPessoas = {
     status: "indisponivel",
@@ -106,7 +116,13 @@ export default function Inicio() {
   return (
     <View style={styles.container}>
       <InicioScreen
-        nomeUsuario={demonstracao ? "Usuário de exemplo" : undefined}
+        nomeUsuario={
+         demonstracao
+         ? "Usuário de exemplo"
+         : estadoPerfil.status === "sucesso"
+         ? estadoPerfil.perfil.nome
+         : undefined
+        }
         estadoPessoas={estadoPessoas}
         estadoAlertas={estadoAlertas}
         demonstracao={demonstracao}

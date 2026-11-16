@@ -4,6 +4,7 @@ export type DadosPerfil = {
   email: string;
   telefone: string | null;
   fotoUrl: string | null;
+  papel?: string;
 };
 
 export type EstadoPerfil =
@@ -32,3 +33,4 @@ export type DadosEdicaoPerfil = Pick<
 export type SalvarPerfil = (
   dados: DadosEdicaoPerfil
 ) => Promise<DadosPerfil>;
+
