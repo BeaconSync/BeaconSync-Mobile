@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { ArrowLeft, ArrowRight, Link2, ShieldCheck } from "lucide-react-native";
+import { entrarDemonstracao } from "../services/sessao";
 import {
   ActivityIndicator,
   Alert,
@@ -49,24 +50,22 @@ export default function TelaAcesso({
     router.replace("/login");
   }
 
-  async function confirmar() {
-    Keyboard.dismiss();
+async function confirmar() {
+  Keyboard.dismiss();
 
-    const sucesso = await enviar();
+  const sucesso = await enviar();
 
-    if (!sucesso) return;
+  if (!sucesso) return;
 
-    if (cadastro) {
-      router.replace("/login");
+  if (cadastro) {
+    router.replace("/login");
 
-      Alert.alert(
-        "Conta criada",
-        "Agora você pode entrar com seu e-mail e sua senha."
-      );
-    } else {
-      router.replace("/inicio");
-    }
+    Alert.alert(
+      "Conta criada",
+      "Agora você pode entrar com seu e-mail e sua senha.",
+    );
   }
+}
 
   return (
     <SafeAreaView style={styles.container}>
@@ -126,10 +125,182 @@ export default function TelaAcesso({
               placeholder="Como podemos chamar você?"
               autoCapitalize="words"
               autoCorrect={false}
-              maxLength={150}
+              maxLength={120}
               editable={!enviando}
             />
           ) : null}
+
+          {cadastro && (
+  <>
+    <CampoFormulario
+      label="Telefone com DDD"
+      value={dados.telefone}
+      onChangeText={(valor) =>
+        alterarCampo(
+          "telefone",
+          valor.replace(/\D/g, "").slice(0, 11),
+        )
+      }
+      erro={erros.telefone}
+      placeholder="11999999999"
+      keyboardType="phone-pad"
+      autoComplete="tel"
+      maxLength={20}
+      editable={!enviando}
+    />
+
+    <View
+      style={{
+        marginBottom: 24,
+        gap: 10,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 15,
+          fontWeight: "600",
+          color: colors.text,
+        }}
+      >
+        Como você deseja participar?
+      </Text>
+
+      <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel="Tipo de usuário"
+        style={{
+          gap: 10,
+        }}
+      >
+        {(
+          [
+            "RESPONSAVEL",
+            "VOLUNTARIO",
+          ] as const
+        ).map((papel) => {
+          const selecionado =
+            dados.papel === papel;
+
+          const responsavel =
+            papel === "RESPONSAVEL";
+
+          return (
+            <Pressable
+              key={papel}
+              onPress={() =>
+                alterarCampo("papel", papel)
+              }
+              disabled={enviando}
+              accessibilityRole="radio"
+              accessibilityState={{
+                checked: selecionado,
+                disabled: enviando,
+              }}
+              accessibilityLabel={
+                responsavel
+                  ? "Responsável. Acompanhar uma pessoa."
+                  : "Voluntário. Oferecer ajuda."
+              }
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                minHeight: 76,
+                padding: 16,
+                borderWidth: 1,
+                borderRadius: 14,
+
+                borderColor: selecionado
+                  ? colors.primary
+                  : colors.border,
+
+                backgroundColor: selecionado
+                  ? colors.primaryLight
+                  : colors.surface,
+
+                opacity:
+                  pressed || enviando
+                    ? 0.6
+                    : 1,
+              })}
+            >
+              <View
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 11,
+                  borderWidth: 2,
+
+                  borderColor: selecionado
+                    ? colors.primary
+                    : colors.textSecondary,
+
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {selecionado && (
+                  <View
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: 5,
+                      backgroundColor: colors.primary,
+                    }}
+                  />
+                )}
+              </View>
+
+              <View
+                style={{
+                  flex: 1,
+                  gap: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: "600",
+                    color: colors.text,
+                  }}
+                >
+                  {responsavel
+                    ? "Responsável"
+                    : "Voluntário"}
+                </Text>
+
+                <Text
+                  style={{
+                    fontSize: 13,
+                    lineHeight: 19,
+                    color: colors.textSecondary,
+                  }}
+                >
+                  {responsavel
+                    ? "Quero acompanhar uma pessoa e manter suas informações atualizadas."
+                    : "Quero oferecer ajuda e informar minha disponibilidade."}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {erros.papel && (
+        <Text
+          accessibilityLiveRegion="polite"
+          style={{
+            fontSize: 13,
+            lineHeight: 19,
+            color: colors.warningText,
+          }}
+        >
+          {erros.papel}
+        </Text>
+      )}
+    </View>
+  </>
+)}
 
           <CampoFormulario
             label="E-mail"
@@ -141,7 +312,7 @@ export default function TelaAcesso({
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete="email"
-            maxLength={254}
+            maxLength={160}
             editable={!enviando}
           />
 
@@ -161,7 +332,7 @@ export default function TelaAcesso({
           {cadastro ? (
             <>
               <Text style={styles.passwordHint}>
-                Use pelo menos 8 caracteres, com letras e números.
+                 Use de 8 a 72 caracteres, com letras e números.
               </Text>
 
               <CampoFormulario
@@ -221,21 +392,21 @@ export default function TelaAcesso({
           </Pressable>
         </View>
 
-        {__DEV__ && !cadastro && (
-        <Pressable
-         onPress={() => {
-          Keyboard.dismiss();
-          router.replace("/inicio");
-         }}
-          disabled={enviando}
-         accessibilityRole="button"
-         style={styles.testButton}
-         >
-        <Text style={styles.linkText}>
-         Acessar modo de teste
-        </Text>
-        </Pressable>
-        )}
+{__DEV__ && !cadastro && (
+  <Pressable
+    onPress={() => {
+      Keyboard.dismiss();
+      entrarDemonstracao();
+    }}
+    disabled={enviando}
+    accessibilityRole="button"
+    style={styles.testButton}
+  >
+    <Text style={styles.linkText}>
+      Acessar modo de teste
+    </Text>
+  </Pressable>
+)}
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
