@@ -110,7 +110,7 @@ const { estado: estadoReal } = useDetalhesPessoa(
 const estado: EstadoDetalhesPessoa = demonstracao
   ? {
       status: "sucesso",
-      pessoa: pessoaExemplo,
+      pessoa: pessoaDemonstracao,
     }
   : estadoReal;
 
