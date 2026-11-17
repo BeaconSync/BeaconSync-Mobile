@@ -13,6 +13,10 @@ import EnderecosPessoaScreen from "../../screens/EnderecoPessoaScreen";
 import { colors } from "../../theme/colors";
 import type { VinculoPessoa } from "../../types/vinculoPessoa";
 import { criarEnvioSituacao } from "../../services/informarSituacao";
+import {
+  criarSalvamentoPessoa,
+} from "../../services/editarPessoa";
+
 
 import type {
   EstadoDetalhesPessoa,
@@ -25,6 +29,9 @@ const pessoaExemplo: PessoaDetalhes = {
   dataNascimento: "1960-05-18",
   fotoUrl: null,
   vinculo: "Familiar",
+  tipoVulnerabilidade: "PESSOA_COM_DEFICIENCIA",
+  necessidadesRemocao:
+  "Cadeira de rodas; apoio de outra pessoa.",
   necessidades: ["Mobilidade reduzida", "Deficiência visual"],
   recursos: ["Cadeira de rodas", "Apoio de outra pessoa"],
   observacoes: "Exemplo fictício: precisa de apoio para se deslocar.",
@@ -103,7 +110,10 @@ export default function DetalhesPessoaRoute() {
 
  const demonstracao = __DEV__ && id === "demonstracao";
 
-const { estado: estadoReal } = useDetalhesPessoa(
+const {
+  estado: estadoReal,
+  recarregar,
+} = useDetalhesPessoa(
   demonstracao ? undefined : id
 );
 
@@ -189,15 +199,28 @@ if (informandoSituacao && estado.status === "sucesso") {
     );
   }
 
-  if (editando && estado.status === "sucesso") {
-    return (
-      <EditarPessoaScreen
-        pessoa={estado.pessoa}
-        demonstracao={demonstracao}
-        onCancelar={() => setEditando(false)}
-      />
-    );
-  }
+if (editando && estado.status === "sucesso") {
+  return (
+    <EditarPessoaScreen
+      key={estado.pessoa.id}
+      pessoa={estado.pessoa}
+      demonstracao={demonstracao}
+
+      onCancelar={() => setEditando(false)}
+
+      onSalvar={
+        demonstracao
+          ? undefined
+          : criarSalvamentoPessoa(estado.pessoa.id)
+      }
+
+      onConcluido={() => {
+        setEditando(false);
+        recarregar();
+      }}
+    />
+  );
+}
 
   return (
     <>
@@ -220,6 +243,7 @@ if (informandoSituacao && estado.status === "sucesso") {
         estado={estado}
         demonstracao={demonstracao}
         onVoltar={voltar}
+        onTentarNovamente={recarregar}
         onEditar={
           estado.status === "sucesso" ? () => setEditando(true) : undefined
         }
