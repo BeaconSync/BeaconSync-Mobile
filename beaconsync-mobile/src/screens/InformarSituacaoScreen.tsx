@@ -27,6 +27,7 @@ type Props = {
   demonstracao?: boolean;
   onVoltar: () => void;
   onEnviar?: EnviarSituacao;
+  onRegistrada?: () => void;
   contextoAlerta?: {
   id: string;
   titulo: string;
@@ -64,6 +65,7 @@ export default function InformarSituacaoScreen({
   onVoltar,
   onEnviar,
   contextoAlerta,
+  onRegistrada,
 }: Props) {
   const {
     status,
@@ -80,6 +82,8 @@ export default function InformarSituacaoScreen({
   contextoAlerta?.id ?? null
 );
 
+const semAlerta = !demonstracao && !contextoAlerta;
+
   useEffect(() => {
     const subscription = BackHandler.addEventListener(
       "hardwareBackPress",
@@ -92,20 +96,29 @@ export default function InformarSituacaoScreen({
     return () => subscription.remove();
   }, [enviando, onVoltar]);
 
-  async function confirmar() {
-    Keyboard.dismiss();
+async function confirmar() {
+  if (enviando || semAlerta) return;
 
-    const sucesso = await enviar();
+  Keyboard.dismiss();
 
-    if (sucesso) {
-      Alert.alert(
-        "Situação registrada",
-        "Sua informação foi enviada.",
-        [{ text: "Voltar aos detalhes", onPress: onVoltar }],
-        { cancelable: false }
-      );
-    }
+  const sucesso = await enviar();
+
+  if (sucesso) {
+    Alert.alert(
+      "Situação registrada",
+      "Sua informação foi registrada neste alerta. Isso não confirma o envio de uma equipe.",
+      [
+        {
+          text: onRegistrada
+            ? "Ver alertas"
+            : "Voltar aos detalhes",
+          onPress: onRegistrada ?? onVoltar,
+        },
+      ],
+      { cancelable: false }
+    );
   }
+}
 
   return (
     <>
@@ -160,6 +173,15 @@ export default function InformarSituacaoScreen({
               </Text>
             </View>
           )}
+
+          {semAlerta && (
+  <View style={styles.infoBox}>
+    <Text style={styles.infoText}>
+      Para registrar uma situação, abra um alerta ativo
+      na aba Alertas e selecione a pessoa relacionada.
+    </Text>
+  </View>
+)}
 
           {contextoAlerta && (
   <View style={styles.infoBox}>
@@ -230,7 +252,7 @@ export default function InformarSituacaoScreen({
 
             <Opcao
               titulo="Não sei informar / outro endereço"
-              descricao="Se souber outro local, descreva na observação."
+              descricao="Se souber outro local, descreva na observação. Sem selecionar um endereço, o endereço cadastrado permanece como referência, sem confirmação da localização atual."
               selecionada={enderecoId === null}
               desabilitada={enviando}
               onPress={() => selecionarEndereco(null)}
@@ -269,8 +291,9 @@ export default function InformarSituacaoScreen({
 
           <View style={styles.infoBox}>
             <Text style={styles.infoText}>
-              Registrar uma situação não aciona automaticamente
-              uma equipe de resgate.
+              “Precisa de ajuda” e “Sem contato” encaminham a
+                informação para triagem. O registro não confirma
+                que uma equipe foi enviada ou que o resgate será imediato.
             </Text>
           </View>
 
@@ -285,26 +308,27 @@ export default function InformarSituacaoScreen({
           )}
 
           <Pressable
-            onPress={confirmar}
-            disabled={enviando}
-            accessibilityRole="button"
-            accessibilityState={{
-              disabled: enviando,
-              busy: enviando,
-            }}
-            style={({ pressed }) => [
-              styles.button,
-              (pressed || enviando) && styles.disabled,
-            ]}
-          >
-            {enviando && (
-              <ActivityIndicator color={colors.surface} />
-            )}
+  onPress={confirmar}
+  disabled={enviando || semAlerta}
+  accessibilityRole="button"
+  accessibilityState={{
+    disabled: enviando || semAlerta,
+    busy: enviando,
+  }}
+  style={({ pressed }) => [
+    styles.button,
+    (pressed || enviando || semAlerta) &&
+      styles.disabled,
+  ]}
+>
+  {enviando && (
+    <ActivityIndicator color={colors.surface} />
+  )}
 
-            <Text style={styles.buttonText}>
-              {enviando ? "Enviando..." : "Registrar situação"}
-            </Text>
-          </Pressable>
+  <Text style={styles.buttonText}>
+    {enviando ? "Enviando..." : "Registrar situação"}
+  </Text>
+</Pressable>
 
           <Pressable
             onPress={onVoltar}

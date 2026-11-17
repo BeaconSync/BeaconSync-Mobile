@@ -71,16 +71,18 @@ export function useInformarSituacao(
 });
 
       return true;
-    } catch {
-      setErro(
-        "Não foi possível confirmar o envio. Seus dados continuam preenchidos. Consulte a situação antes de tentar novamente."
-      );
+} catch (erro) {
+  setErro(
+    erro instanceof Error
+      ? erro.message
+      : "Não foi possível confirmar o envio. Seus dados continuam preenchidos. Consulte a situação antes de tentar novamente."
+  );
 
-      return false;
-    } finally {
-      envioEmAndamento.current = false;
-      setEnviando(false);
-    }
+  return false;
+} finally {
+  envioEmAndamento.current = false;
+  setEnviando(false);
+}
   }
 
   return {

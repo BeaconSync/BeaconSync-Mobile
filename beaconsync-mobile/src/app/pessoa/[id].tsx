@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 
+import VinculosPessoaConectados from "../../components/VinculosPessoaConectados";
 import { useDetalhesPessoa } from "../../hooks/useDetalhesPessoa";
 import EditarPessoaScreen from "../../screens/EditarPessoaScreen";
 import DetalhesPessoaScreen from "../../screens/DetalhaPessoaScreen";
@@ -11,6 +12,8 @@ import VinculosPessoaScreen from "../../screens/VinculoPessoaScreen";
 import EnderecosPessoaScreen from "../../screens/EnderecoPessoaScreen";
 import { colors } from "../../theme/colors";
 import type { VinculoPessoa } from "../../types/vinculoPessoa";
+import { criarEnvioSituacao } from "../../services/informarSituacao";
+
 import type {
   EstadoDetalhesPessoa,
   PessoaDetalhes,
@@ -128,20 +131,51 @@ const estado: EstadoDetalhesPessoa = demonstracao
     );
   }
 
-  if (informandoSituacao && estado.status === "sucesso") {
-    return (
-      <InformarSituacaoScreen
-        pessoa={estado.pessoa}
-        demonstracao={demonstracao}
-        contextoAlerta={
-          alertaId
-            ? { id: alertaId, titulo: alertaTitulo || "Alerta selecionado" }
-            : undefined
-        }
-        onVoltar={() => setInformandoSituacao(false)}
-      />
-    );
-  }
+if (informandoSituacao && estado.status === "sucesso") {
+  const alertaSelecionadoId =
+    typeof alertaId === "string" && alertaId.trim()
+      ? alertaId
+      : null;
+
+  const tituloSelecionado =
+    typeof alertaTitulo === "string" &&
+    alertaTitulo.trim()
+      ? alertaTitulo
+      : "Alerta selecionado";
+
+  return (
+    <InformarSituacaoScreen
+      key={`${estado.pessoa.id}-${alertaSelecionadoId ?? "sem-alerta"}`}
+      pessoa={estado.pessoa}
+      demonstracao={demonstracao}
+      contextoAlerta={
+        alertaSelecionadoId
+          ? {
+              id: alertaSelecionadoId,
+              titulo: tituloSelecionado,
+            }
+          : undefined
+      }
+      onEnviar={
+        !demonstracao && alertaSelecionadoId
+          ? criarEnvioSituacao(
+              estado.pessoa,
+              alertaSelecionadoId
+            )
+          : undefined
+      }
+      onVoltar={() => setInformandoSituacao(false)}
+      onRegistrada={
+        demonstracao
+          ? undefined
+          : () => {
+              setInformandoSituacao(false);
+              router.replace("/alertas");
+            }
+      }
+    />
+  );
+}
 
   if (exibindoExclusao && estado.status === "sucesso") {
     return (
@@ -205,10 +239,10 @@ const estado: EstadoDetalhesPessoa = demonstracao
             : undefined
         }
         onVerVinculos={
-          demonstracao && estado.status === "sucesso"
-            ? () => setVendoVinculos(true)
-            : undefined
-        }
+  estado.status === "sucesso"
+    ? () => setVendoVinculos(true)
+    : undefined
+}
         onGerenciarEnderecos={
           estado.status === "sucesso"
             ? () => setVendoEnderecos(true)
@@ -217,17 +251,25 @@ const estado: EstadoDetalhesPessoa = demonstracao
       />
 
       {vendoVinculos && estado.status === "sucesso" && (
-        <VinculosPessoaScreen
-          nomePessoa={estado.pessoa.nome}
-          estado={
-            demonstracao
-              ? { status: "sucesso", vinculos: vinculosExemplo }
-              : { status: "indisponivel" }
-          }
-          demonstracao={demonstracao}
-          onFechar={() => setVendoVinculos(false)}
-        />
-      )}
+  demonstracao ? (
+    <VinculosPessoaScreen
+      nomePessoa={estado.pessoa.nome}
+      estado={{
+        status: "sucesso",
+        vinculos: vinculosExemplo,
+      }}
+      demonstracao
+      onFechar={() => setVendoVinculos(false)}
+    />
+  ) : (
+    <VinculosPessoaConectados
+      key={estado.pessoa.id}
+      pessoaId={estado.pessoa.id}
+      nomePessoa={estado.pessoa.nome}
+      onFechar={() => setVendoVinculos(false)}
+    />
+  )
+)}
 
       {vendoEnderecos && estado.status === "sucesso" && (
         <EnderecosPessoaScreen
