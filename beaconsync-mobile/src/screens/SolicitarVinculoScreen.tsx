@@ -8,9 +8,9 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
+
 
 import {
   SafeAreaProvider,
@@ -32,6 +32,7 @@ type Props = {
   referenciaCadastro: string;
   demonstracao?: boolean;
   onFechar: () => void;
+  onConcluido?: () => void;
   onSolicitar?: EnviarSolicitacaoVinculo;
 };
 
@@ -39,28 +40,32 @@ export default function SolicitarVinculoScreen({
   referenciaCadastro,
   demonstracao = false,
   onFechar,
+  onConcluido,
   onSolicitar,
 }: Props) {
   const {
     vinculo,
-    mensagem,
     enviando,
     erro,
     solicitacao,
     selecionarVinculo,
-    alterarMensagem,
     solicitar,
   } = useSolicitarVinculo(
     referenciaCadastro,
-    onSolicitar
+    demonstracao ? undefined : onSolicitar
   );
 
-  function fechar() {
-    if (enviando) return;
+function fechar() {
+  if (enviando) return;
 
-    Keyboard.dismiss();
+  Keyboard.dismiss();
+
+  if (solicitacao && onConcluido) {
+    onConcluido();
+  } else {
     onFechar();
   }
+}
 
   async function confirmar() {
     Keyboard.dismiss();
@@ -238,37 +243,7 @@ export default function SolicitarVinculoScreen({
                       );
                     })}
                   </View>
-                </View>
-
-                <View style={styles.section}>
-                  <Text style={styles.label}>
-                    Mensagem (opcional)
-                  </Text>
-
-                  <Text style={styles.helper}>
-                    Explique brevemente seu vínculo para
-                    ajudar na análise do pedido.
-                  </Text>
-
-                  <TextInput
-                    value={mensagem}
-                    onChangeText={alterarMensagem}
-                    editable={!enviando}
-                    multiline
-                    maxLength={500}
-                    textAlignVertical="top"
-                    placeholder="Ex.: sou familiar e ajudo no acompanhamento diário."
-                    placeholderTextColor={
-                      colors.textSecondary
-                    }
-                    accessibilityLabel="Mensagem da solicitação"
-                    style={styles.input}
-                  />
-
-                  <Text style={styles.counter}>
-                    {mensagem.length}/500
-                  </Text>
-                </View>
+                </View>               
 
                 <View style={styles.warningBox}>
                   <Text style={styles.warningText}>

@@ -1,4 +1,8 @@
-import { useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import type {
   EnviarSolicitacaoVinculo,
@@ -20,36 +24,48 @@ export function useSolicitarVinculo(
   const [vinculo, setVinculo] =
     useState<TipoVinculoSolicitado | null>(null);
 
-  const [mensagem, setMensagem] = useState("");
-  const [enviando, setEnviando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
+  const [enviando, setEnviando] =
+    useState(false);
+
+  const [erro, setErro] =
+    useState<string | null>(null);
 
   const [solicitacao, setSolicitacao] =
     useState<ResultadoSolicitacaoVinculo | null>(null);
 
-  const envioEmAndamento = useRef(false);
+  const trava = useRef(false);
+  const concluida = useRef(false);
+  const ativo = useRef(true);
 
-  function selecionarVinculo(valor: TipoVinculoSolicitado) {
-    if (envioEmAndamento.current || solicitacao) return;
+  useEffect(() => {
+    ativo.current = true;
+
+    return () => {
+      ativo.current = false;
+    };
+  }, []);
+
+  function selecionarVinculo(
+    valor: TipoVinculoSolicitado
+  ) {
+    if (trava.current || concluida.current) return;
 
     setVinculo(valor);
     setErro(null);
   }
 
-  function alterarMensagem(valor: string) {
-    if (envioEmAndamento.current || solicitacao) return;
-
-    setMensagem(valor.slice(0, 500));
-    setErro(null);
-  }
-
   async function solicitar() {
-    if (envioEmAndamento.current || solicitacao) return;
+    if (trava.current || concluida.current) return;
 
     setErro(null);
 
-    if (!vinculo) {
-      setErro("Selecione seu vínculo com a pessoa.");
+    if (
+      !vinculo ||
+      !opcoesVinculo.includes(vinculo)
+    ) {
+      setErro(
+        "Selecione seu vínculo com a pessoa."
+      );
       return;
     }
 
@@ -62,47 +78,63 @@ export function useSolicitarVinculo(
 
     if (!onSolicitar) {
       setErro(
-        "O envio está indisponível no momento. Nenhuma solicitação foi registrada."
+        "O envio está indisponível nesta prévia. Nenhuma solicitação foi enviada."
       );
       return;
     }
 
-    envioEmAndamento.current = true;
+    trava.current = true;
     setEnviando(true);
 
     try {
       const resultado = await onSolicitar({
         referenciaCadastro,
         vinculo,
-        mensagem: mensagem.trim(),
+        mensagem: "",
       });
 
       if (
-        !resultado?.id?.trim() ||
+        typeof resultado?.id !== "string" ||
+        !resultado.id.trim() ||
         resultado.status !== "pendente"
       ) {
-        throw new Error("Resposta de solicitação inválida.");
+        throw new Error(
+          "Não foi possível confirmar a solicitação retornada pela API."
+        );
       }
 
-      setSolicitacao(resultado);
-    } catch {
-      setErro(
-        "Não foi possível confirmar o envio. Seus dados continuam preenchidos."
-      );
+      concluida.current = true;
+
+      if (ativo.current) {
+        setSolicitacao(resultado);
+      }
+    } catch (erroRecebido) {
+      if (ativo.current) {
+        const mensagem =
+          erroRecebido instanceof Error
+            ? erroRecebido.message
+            : "Não foi possível confirmar o envio.";
+
+        setErro(
+          mensagem +
+          " Se houve falha de conexão, confira com o responsável antes de reenviar."
+        );
+      }
     } finally {
-      envioEmAndamento.current = false;
-      setEnviando(false);
+      trava.current = false;
+
+      if (ativo.current) {
+        setEnviando(false);
+      }
     }
   }
 
   return {
     vinculo,
-    mensagem,
     enviando,
     erro,
     solicitacao,
     selecionarVinculo,
-    alterarMensagem,
     solicitar,
   };
 }
