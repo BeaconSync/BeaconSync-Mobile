@@ -23,15 +23,32 @@ import {
   formatarCpf,
 } from "../utils/validarCadatroJava";
 
+type DadosCamposJava = Pick<
+  DadosCadastroPessoa,
+  "cpf" | "tipoVulnerabilidade" | "distritoId"
+>;
+
 type Props = {
   etapa: EtapaCadastro;
-  dados: DadosCadastroPessoa;
+  dados: DadosCamposJava;
   erros: ErrosCadastroPessoa;
   desabilitado?: boolean;
-  onAlterar: <K extends keyof DadosCadastroPessoa>(
-    campo: K,
-    valor: DadosCadastroPessoa[K]
-  ) => void;
+
+  onAlterar: {
+    (campo: "cpf", valor: string): void;
+
+    (
+      campo: "tipoVulnerabilidade",
+      valor: NonNullable<
+        DadosCadastroPessoa["tipoVulnerabilidade"]
+      >
+    ): void;
+
+    (
+      campo: "distritoId",
+      valor: number | null
+    ): void;
+  };
 };
 
 function normalizarBusca(valor: string) {

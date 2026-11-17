@@ -40,7 +40,7 @@ export function formatarCpf(valor: string): string {
     .replace(/\.(\d{3})(\d)/, ".$1-$2");
 }
 
-function cpfValido(valor: string): boolean {
+export function cpfValido(valor: string): boolean {
   const numeros = valor.replace(/\D/g, "");
 
   if (
