@@ -1,7 +1,13 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
+import SolicitacoesRecebidasConectadas from "../../components/SolicitacoesRecebidasConectadas";
 import { usePessoasAcompanhadas } from "../../hooks/usePessoasAcompanhadas";
 import MenuTestes from "../../components/MenuTestes";
 import MinhasSolicitacoesScreen from "../../screens/MinhasSolicitacoesScreen";
@@ -75,6 +81,11 @@ const minhasSolicitacoesExemplo: SolicitacaoVinculoEnviada[] = [
 
 export default function PessoasRoute() {
 
+  const [
+  vendoSolicitacoesReais,
+  setVendoSolicitacoesReais,
+] = useState(false);
+
   const router = useRouter();
   const { estado, recarregar } = usePessoasAcompanhadas();
 
@@ -117,6 +128,27 @@ export default function PessoasRoute() {
           onCadastrar={() => router.push("/cadastrar-pessoa")}
           onAbrirPessoa={(pessoa) => abrirPessoa(pessoa.id)}
         />
+
+        {estado.status === "sucesso" && (
+  <Pressable
+    onPress={() => setVendoSolicitacoesReais(true)}
+    accessibilityRole="button"
+    style={({ pressed }) => [
+      styles.solicitacoesButton,
+      pressed && styles.pressed,
+    ]}
+  >
+    <Text style={styles.solicitacoesText}>
+      Solicitações recebidas
+    </Text>
+  </Pressable>
+)}
+
+{vendoSolicitacoesReais && (
+  <SolicitacoesRecebidasConectadas
+    onFechar={() => setVendoSolicitacoesReais(false)}
+  />
+)}
 
       {__DEV__ && (
         <MenuTestes
@@ -184,4 +216,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  solicitacoesButton: {
+  minHeight: 48,
+  justifyContent: "center",
+  alignItems: "center",
+  paddingHorizontal: 20,
+  paddingVertical: 12,
+  borderTopWidth: 1,
+  borderTopColor: colors.border,
+},
+solicitacoesText: {
+  fontSize: 14,
+  fontWeight: "600",
+  textAlign: "center",
+  color: colors.primary,
+},
+pressed: {
+  opacity: 0.7,
+},
 });

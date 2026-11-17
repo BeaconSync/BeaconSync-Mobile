@@ -32,6 +32,7 @@ type Props = {
   onFechar: () => void;
   onAtualizada: (solicitacao: SolicitacaoVinculoRecebida) => void;
   onResponder?: ResponderSolicitacaoVinculo;
+  consultaParcial?: boolean;
   onTentarNovamente?: () => void;
 };
 
@@ -64,6 +65,7 @@ function formatarData(valor: string | null) {
 export default function SolicitacoesRecebidasScreen({
   estado = { status: "indisponivel" },
   demonstracao = false,
+  consultaParcial = false,
   onFechar,
   onAtualizada,
   onResponder,
@@ -200,6 +202,40 @@ export default function SolicitacoesRecebidasScreen({
                   </View>
                 )}
 
+                {consultaParcial && (
+  <View style={styles.infoBox}>
+    <Text style={styles.infoText}>
+      Esta consulta busca os pedidos pendentes.
+      As decisões tomadas aqui permanecem visíveis até
+      atualizar ou fechar a tela. O histórico completo
+      ainda não está disponível.
+    </Text>
+  </View>
+)}
+
+{onTentarNovamente && (
+  <Pressable
+    onPress={onTentarNovamente}
+    disabled={bloqueado || estado.status === "carregando"}
+    accessibilityRole="button"
+    accessibilityState={{
+      disabled: bloqueado || estado.status === "carregando",
+    }}
+    style={({ pressed }) => [
+      styles.closeButton,
+      (
+        pressed ||
+        bloqueado ||
+        estado.status === "carregando"
+      ) && styles.disabled,
+    ]}
+  >
+    <Text style={styles.closeText}>
+      Atualizar solicitações
+    </Text>
+  </Pressable>
+)}
+
                 <View style={styles.filters}>
                   {(["pendentes", "todas"] as const).map(
                     (opcao) => (
@@ -222,8 +258,10 @@ export default function SolicitacoesRecebidasScreen({
                       >
                         <Text style={styles.filterText}>
                           {opcao === "pendentes"
-                            ? "Pendentes"
-                            : "Todas"}
+  ? "Pendentes"
+  : consultaParcial
+    ? "Da consulta"
+    : "Todas"}
                         </Text>
                       </Pressable>
                     )

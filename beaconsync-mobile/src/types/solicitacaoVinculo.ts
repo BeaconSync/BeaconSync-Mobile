@@ -31,7 +31,7 @@ export type SolicitacaoVinculoRecebida = {
   pessoaId: string;
   pessoaNome: string;
   solicitanteNome: string;
-  vinculo: TipoVinculoSolicitado;
+  vinculo: string;
   mensagem: string;
   criadaEm: string | null;
   status: StatusSolicitacaoRecebida;
