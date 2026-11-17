@@ -130,21 +130,19 @@ export function useEditarPerfil(
       return null;
     }
 
-    if (telefone.trim()) {
-      const caracteresValidos = /^[\d\s()+-]+$/.test(
-        telefone
-      );
+const caracteresValidos = /^[\d\s()+-]+$/.test(telefone);
 
-      const tamanhoValido =
-        telefoneTratado.length === 10 ||
-        telefoneTratado.length === 11;
+const tamanhoValido =
+  telefoneTratado.length === 10 ||
+  telefoneTratado.length === 11;
 
-      if (!caracteresValidos || !tamanhoValido) {
-        setErro(
-          "Informe um telefone brasileiro com DDD e 10 ou 11 números, ou deixe o campo vazio."
-        );
-        return null;
-      }
+if (!caracteresValidos || !tamanhoValido) {
+  setErro(
+    "Informe um telefone brasileiro com DDD e 10 ou 11 números."
+  );
+
+  return null;
+
     }
 
     if (!onSalvar) {
@@ -165,15 +163,18 @@ export function useEditarPerfil(
       });
 
       return atualizado;
-    } catch {
-      setErro(
-        "Não foi possível confirmar a atualização. Seus dados continuam preenchidos."
-      );
-      return null;
-    } finally {
-      operacaoEmAndamento.current = false;
-      setEnviando(false);
-    }
+    } catch (erro) {
+  setErro(
+    erro instanceof Error
+      ? erro.message
+      : "Não foi possível confirmar a atualização. Seus dados continuam preenchidos."
+  );
+
+  return null;
+} finally {
+  operacaoEmAndamento.current = false;
+  setEnviando(false);
+}
   }
 
   return {

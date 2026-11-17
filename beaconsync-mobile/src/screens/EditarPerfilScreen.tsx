@@ -237,7 +237,7 @@ export default function EditarPerfilScreen({
 
             <View style={styles.section}>
               <Text style={styles.label}>
-                Telefone (opcional)
+                Telefone
               </Text>
 
               <TextInput

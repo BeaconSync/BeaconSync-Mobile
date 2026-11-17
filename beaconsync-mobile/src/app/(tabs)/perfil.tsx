@@ -1,20 +1,17 @@
 import { useState } from "react";
-import FluxoVoluntariado from "../../components/FluxoVoluntariado";
 import {
   Alert,
   StyleSheet,
   View,
 } from "react-native";
 
+import FluxoVoluntariado from "../../components/FluxoVoluntariado";
 import MenuTestes from "../../components/MenuTestes";
 
-import {
-  useMeuPerfil,
-} from "../../hooks/useMeuPerfil";
+import { useMeuPerfil } from "../../hooks/useMeuPerfil";
 
-import {
-  sair,
-} from "../../services/sessao";
+import { criarSalvamentoDadosPerfil } from "../../services/editarPerfil";
+import { sair } from "../../services/sessao";
 
 import CadastroVoluntarioScreen from "../../screens/CadastroVoluntarioScreen";
 import EditarPerfilScreen from "../../screens/EditarPerfilScreen";
@@ -28,9 +25,7 @@ import type {
   EstadoPerfil,
 } from "../../types/perfil";
 
-import type {
-  Voluntario,
-} from "../../types/voluntario";
+import type { Voluntario } from "../../types/voluntario";
 
 const perfilExemplo: DadosPerfil = {
   id: "perfil-demonstracao",
@@ -48,25 +43,21 @@ const voluntarioExemplo: Voluntario = {
   especialidade: "Organização de doações",
   outraEspecialidade: "",
   disponivel: true,
-
   observacoes:
     "Exemplo fictício: disponibilidade aos finais de semana.",
-
-  atualizadoEm:
-    "2026-11-10T10:00:00-03:00",
+  atualizadoEm: "2026-11-10T10:00:00-03:00",
 };
 
 export default function PerfilRoute() {
   const [
-  vendoVoluntariadoReal,
-  setVendoVoluntariadoReal,
-] = useState(false);
-  
+    vendoVoluntariadoReal,
+    setVendoVoluntariadoReal,
+  ] = useState(false);
+
   const [mostrarExemplo, setMostrarExemplo] =
     useState(false);
 
-  const [editando, setEditando] =
-    useState(false);
+  const [editando, setEditando] = useState(false);
 
   const [
     cadastrandoVoluntario,
@@ -84,45 +75,45 @@ export default function PerfilRoute() {
   const [voluntario, setVoluntario] =
     useState<Voluntario | null>(null);
 
-  const demonstracao =
-    __DEV__ && mostrarExemplo;
+  const demonstracao = __DEV__ && mostrarExemplo;
 
   const {
     estado: estadoReal,
     recarregar,
   } = useMeuPerfil(!demonstracao);
 
-  const estado: EstadoPerfil =
-    demonstracao
-      ? {
-          status: "sucesso",
-          perfil,
-        }
-      : estadoReal;
+  const estado: EstadoPerfil = demonstracao
+    ? {
+        status: "sucesso",
+        perfil,
+      }
+    : estadoReal;
 
   async function encerrarSessao() {
     try {
       const aviso = await sair();
 
       if (aviso) {
-        Alert.alert(
-          "Saída da conta",
-          aviso,
-        );
+        Alert.alert("Saída da conta", aviso);
       }
     } catch {
       Alert.alert(
         "Não foi possível concluir a saída",
-        "Não conseguimos apagar a sessão armazenada. Tente novamente.",
+        "Não conseguimos apagar a sessão armazenada. Tente novamente."
       );
     }
   }
 
-  function concluirEdicao(
-    atualizado: DadosPerfil,
-  ) {
-    setPerfil(atualizado);
+  function concluirEdicao(atualizado: DadosPerfil) {
     setEditando(false);
+
+    if (demonstracao) {
+      setPerfil(atualizado);
+      return;
+    }
+
+    // Consulta novamente o perfil salvo na API.
+    void recarregar();
   }
 
   function abrirVoluntariado() {
@@ -133,11 +124,16 @@ export default function PerfilRoute() {
     }
   }
 
-  function fecharPrevia() {
-    setMostrarExemplo(false);
+  function fecharPaineis() {
     setEditando(false);
     setCadastrandoVoluntario(false);
     setVendoPainelVoluntario(false);
+    setVendoVoluntariadoReal(false);
+  }
+
+  function fecharPrevia() {
+    fecharPaineis();
+    setMostrarExemplo(false);
   }
 
   return (
@@ -145,105 +141,92 @@ export default function PerfilRoute() {
       <PerfilScreen
         estado={estado}
         demonstracao={demonstracao}
-
         onVoltarLogin={() => {
           void encerrarSessao();
         }}
-
         onTentarNovamente={() => {
           void recarregar();
         }}
-
         onEditar={
-          demonstracao &&
           estado.status === "sucesso"
             ? () => setEditando(true)
             : undefined
         }
-
         onVoluntariado={
-  estado.status === "sucesso"
-    ? demonstracao
-      ? abrirVoluntariado
-      : estado.perfil.papel === "VOLUNTARIO"
-        ? () => setVendoVoluntariadoReal(true)
-        : undefined
-    : undefined
-}
-
+          estado.status === "sucesso"
+            ? demonstracao
+              ? abrirVoluntariado
+              : estado.perfil.papel === "VOLUNTARIO"
+                ? () => setVendoVoluntariadoReal(true)
+                : undefined
+            : undefined
+        }
         rotuloVoluntariado={
-  demonstracao && !voluntario
-    ? "Quero ser voluntário"
-    : "Meu voluntariado"
-}
+          demonstracao && !voluntario
+            ? "Quero ser voluntário"
+            : "Meu voluntariado"
+        }
       />
 
       {!demonstracao &&
-  vendoVoluntariadoReal &&
-  estado.status === "sucesso" && (
-    <FluxoVoluntariado
-      key={estado.perfil.id}
-      perfil={estado.perfil}
-      onFechar={() =>
-        setVendoVoluntariadoReal(false)
-      }
-    />
-  )}
+        vendoVoluntariadoReal &&
+        estado.status === "sucesso" && (
+          <FluxoVoluntariado
+            key={estado.perfil.id}
+            perfil={estado.perfil}
+            onFechar={() =>
+              setVendoVoluntariadoReal(false)
+            }
+          />
+        )}
 
       {__DEV__ && (
         <MenuTestes
           opcoes={[
             {
               id: "perfil-sem-voluntariado",
-              titulo:
-                "Perfil sem cadastro de voluntário",
-
+              titulo: "Perfil sem cadastro de voluntário",
               onPress: () => {
+                fecharPaineis();
                 setMostrarExemplo(true);
                 setVoluntario(null);
               },
             },
-
             {
               id: "painel-voluntario",
-              titulo:
-                "Painel de voluntário de exemplo",
-
+              titulo: "Painel de voluntário de exemplo",
               onPress: () => {
+                fecharPaineis();
                 setMostrarExemplo(true);
-
-                setVoluntario(
-                  voluntarioExemplo,
-                );
-
-                setVendoPainelVoluntario(
-                  true,
-                );
+                setVoluntario(voluntarioExemplo);
+                setVendoPainelVoluntario(true);
               },
             },
-
             {
               id: "fechar-previa",
-              titulo:
-                "Fechar prévia do perfil",
+              titulo: "Fechar prévia do perfil",
               onPress: fecharPrevia,
             },
           ]}
         />
       )}
 
-      {demonstracao &&
-        editando &&
-        estado.status === "sucesso" && (
-          <EditarPerfilScreen
-            perfil={estado.perfil}
+      {editando && estado.status === "sucesso" && (
+        <EditarPerfilScreen
+          key={`${
+            demonstracao ? "exemplo" : "real"
+          }-${estado.perfil.id}`}
+          perfil={estado.perfil}
+          demonstracao={demonstracao}
+          onCancelar={() => setEditando(false)}
+          onConcluido={concluirEdicao}
+          onSalvar={
             demonstracao
-            onCancelar={() =>
-              setEditando(false)
-            }
-            onConcluido={concluirEdicao}
-          />
-        )}
+              ? undefined
+              : criarSalvamentoDadosPerfil(estado.perfil)
+          }
+        />
+      )}
 
       {demonstracao &&
         cadastrandoVoluntario &&
@@ -252,9 +235,7 @@ export default function PerfilRoute() {
             perfil={estado.perfil}
             demonstracao
             onFechar={() =>
-              setCadastrandoVoluntario(
-                false,
-              )
+              setCadastrandoVoluntario(false)
             }
           />
         )}
@@ -264,26 +245,16 @@ export default function PerfilRoute() {
         estado.status === "sucesso" &&
         voluntario && (
           <PainelVoluntarioScreen
-            nomeUsuario={
-              estado.perfil.nome
-            }
-
+            nomeUsuario={estado.perfil.nome}
             estado={{
               status: "sucesso",
               voluntario,
             }}
-
             demonstracao
-
             onFechar={() =>
-              setVendoPainelVoluntario(
-                false,
-              )
+              setVendoPainelVoluntario(false)
             }
-
-            onAtualizado={
-              setVoluntario
-            }
+            onAtualizado={setVoluntario}
           />
         )}
     </View>
