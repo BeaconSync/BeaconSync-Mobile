@@ -4,14 +4,20 @@ export type PessoaRelacionadaAlerta = {
   id: string;
   nome: string;
   localReferencia: string | null;
-  situacao: StatusInformado | null;
+  situacao: StatusInformado | "Resgatada" | null;
   dataResposta: string | null;
 };
 
 export type EstadoPessoasRelacionadas =
-  | { status: "indisponivel" }
+  | {
+      status: "indisponivel";
+      mensagem?: string;
+    }
   | { status: "carregando" }
-  | { status: "erro"; mensagem: string }
+  | {
+      status: "erro";
+      mensagem: string;
+    }
   | {
       status: "sucesso";
       pessoas: PessoaRelacionadaAlerta[];

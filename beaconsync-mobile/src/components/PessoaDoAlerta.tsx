@@ -23,10 +23,16 @@ function textoSituacao(
   switch (situacao) {
     case "Seguro":
       return "Informada como segura";
+
     case "Precisa de Ajuda":
       return "Precisa de ajuda";
+
     case "Sem Contato":
       return "Sem contato";
+
+    case "Resgatada":
+      return "Resgate registrado";
+
     default:
       return "Sem resposta registrada";
   }
@@ -48,10 +54,11 @@ export default function PessoasDoAlerta({
 }: Props) {
   let mensagem = "";
 
-  if (estado.status === "indisponivel") {
-    mensagem =
-      "Ainda não foi possível consultar as pessoas relacionadas a este alerta.";
-  } else if (estado.status === "carregando") {
+if (estado.status === "indisponivel") {
+  mensagem =
+    estado.mensagem ??
+    "Ainda não foi possível consultar as pessoas relacionadas a este alerta.";
+} else if (estado.status === "carregando") {
     mensagem = "Buscando pessoas relacionadas...";
   } else if (estado.status === "erro") {
     mensagem = estado.mensagem;
@@ -97,18 +104,19 @@ export default function PessoasDoAlerta({
 
             <View style={styles.response}>
               <Text style={styles.label}>
-                Resposta neste alerta
+                Situação neste alerta
               </Text>
 
               <Text style={styles.responseText}>
                 {textoSituacao(pessoa.situacao)}
               </Text>
 
-              {pessoa.situacao !== null && (
-                <Text style={styles.description}>
-                  {formatarData(pessoa.dataResposta)}
-                </Text>
-              )}
+              {pessoa.dataResposta && (
+  <Text style={styles.description}>
+    Última resposta informada:{" "}
+    {formatarData(pessoa.dataResposta)}
+  </Text>
+)}
             </View>
 
             {onAbrirPessoa && (

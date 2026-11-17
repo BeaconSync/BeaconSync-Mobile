@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native";
 
+import { useAlertas } from "../../hooks/useAlertas";
 import AlertasScreen from "../../screens/AlertasScreen";
 import { colors } from "../../theme/colors";
 import type {
@@ -65,14 +66,17 @@ export default function AlertasRoute() {
 
   const demonstracao = __DEV__ && mostrarExemplo;
 
-  const estado: EstadoAlertas = demonstracao
-    ? {
-        status: "sucesso",
-        alertas: alertasExemplo,
-      }
-    : {
-        status: "indisponivel",
-      };
+  const {
+  estado: estadoReal,
+  recarregar,
+} = useAlertas(!demonstracao);
+
+const estado: EstadoAlertas = demonstracao
+  ? {
+      status: "sucesso",
+      alertas: alertasExemplo,
+    }
+  : estadoReal;
 
   function abrirPessoa(pessoaId: string, alerta: Alerta) {
     if (alerta.status === "ativo") {
@@ -97,10 +101,13 @@ export default function AlertasRoute() {
   return (
     <View style={styles.container}>
       <AlertasScreen
-        estado={estado}
-        demonstracao={demonstracao}
-        onAbrirPessoa={abrirPessoa}
-      />
+  estado={estado}
+  demonstracao={demonstracao}
+  onAbrirPessoa={abrirPessoa}
+  onTentarNovamente={() => {
+    void recarregar();
+  }}
+/>
 
       {__DEV__ && (
         <Pressable

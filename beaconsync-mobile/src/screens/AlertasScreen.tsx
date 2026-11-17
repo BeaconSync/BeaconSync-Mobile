@@ -104,7 +104,7 @@ export default function AlertasScreen({
 
   let tituloMensagem = "Informações indisponíveis";
   let descricaoMensagem =
-    "Ainda não foi possível consultar os alertas das áreas acompanhadas.";
+    "Ainda não foi possível consultar os alertas cadastrados.";
 
   if (estado.status === "carregando") {
     tituloMensagem = "Buscando alertas";
@@ -184,7 +184,7 @@ function abrirPessoaDoAlerta(pessoaId: string) {
           <Text style={styles.title}>Alertas</Text>
 
           <Text style={styles.subtitle}>
-            Acompanhe os avisos das regiões de quem você cuida.
+            Consulte os alertas cadastrados e confira as regiões abrangidas.
           </Text>
         </View>
 
