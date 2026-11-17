@@ -1,6 +1,7 @@
 import {
   useEffect,
   useRef,
+  useState,
   type ComponentRef,
 } from "react";
 
@@ -20,6 +21,12 @@ import {
 import {
   SafeAreaView,
 } from "react-native-safe-area-context";
+
+import SolicitarVinculoScreen from "./SolicitarVinculoScreen";
+
+import {
+  criarSolicitacaoVinculo,
+} from "../services/solicitarVinculo";
 
 import CampoFormulario from "../components/CampoFormulario";
 import CamposCadastroJava from "../components/CamposCadastroJava";
@@ -47,6 +54,12 @@ function mascaraData(valor: string) {
 
 export default function NovoCadastroPessoaScreen() {
   const router = useRouter();
+
+   const [
+    solicitandoVinculo,
+    setSolicitandoVinculo,
+   ] = useState(false);
+
   const { autenticado } = useSessao();
 
   const formulario = useNovoCadastroPessoa();
@@ -183,12 +196,20 @@ export default function NovoCadastroPessoaScreen() {
                 });
               })}
 
-            {resultado.status === "existente" &&
-              botao(
-                "Conferir CPF",
-                formulario.revisar,
-                true
-              )}
+            {resultado.status === "existente" && (
+  <>
+    {botao(
+      "Solicitar vínculo",
+      () => setSolicitandoVinculo(true)
+    )}
+
+    {botao(
+      "Conferir CPF",
+      formulario.revisar,
+      true
+    )}
+  </>
+)}
 
             {botao(
               "Voltar para pessoas",
@@ -434,6 +455,29 @@ export default function NovoCadastroPessoaScreen() {
           </>
         )}
       </ScrollView>
+
+        {autenticado &&
+  solicitandoVinculo &&
+  resultado?.status === "existente" && (
+    <SolicitarVinculoScreen
+      key={resultado.pessoaId}
+      referenciaCadastro={resultado.pessoaId}
+
+      onSolicitar={criarSolicitacaoVinculo(
+        resultado.pessoaId
+      )}
+
+      onFechar={() =>
+        setSolicitandoVinculo(false)
+      }
+
+      onConcluido={() => {
+        setSolicitandoVinculo(false);
+        router.replace("/pessoas");
+      }}
+    />
+  )}
+
     </SafeAreaView>
   );
 }
