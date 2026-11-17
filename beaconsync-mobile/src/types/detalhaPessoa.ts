@@ -33,6 +33,9 @@ export type PessoaDetalhes = {
 
   dataNascimento: string | null;
 
+  tipoVulnerabilidade?: string | null;
+  necessidadesRemocao?: string | null;
+
   fotoUrl: string | null;
   vinculo: string | null;
 

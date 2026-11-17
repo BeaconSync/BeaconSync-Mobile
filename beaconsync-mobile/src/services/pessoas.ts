@@ -274,10 +274,13 @@ export async function consultarDetalhesPessoa(
   const necessidadeRemocao =
     resposta.necessidadesRemocao?.trim();
 
-  return {
-    id: String(resposta.id),
-    nome: resposta.nome,
-    dataNascimento: resposta.dataNascimento,
+return {
+  id: String(resposta.id),
+  nome: resposta.nome,
+  dataNascimento: resposta.dataNascimento,
+
+  tipoVulnerabilidade: resposta.tipoVulnerabilidade,
+  necessidadesRemocao: resposta.necessidadesRemocao,
 
     fotoUrl: null,
     vinculo: null,
