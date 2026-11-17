@@ -1,3 +1,7 @@
+import {
+  excluirPessoa,
+} from "../../services/excluirPessoa";
+
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 
@@ -187,17 +191,34 @@ if (informandoSituacao && estado.status === "sucesso") {
   );
 }
 
-  if (exibindoExclusao && estado.status === "sucesso") {
-    return (
-      <ExcluirPessoaScreen
-        pessoaId={estado.pessoa.id}
-        nomePessoa={estado.pessoa.nome}
-        demonstracao={demonstracao}
-        onCancelar={() => setExibindoExclusao(false)}
-        onExcluido={() => router.replace("/pessoas")}
-      />
-    );
-  }
+if (
+  exibindoExclusao &&
+  estado.status === "sucesso"
+) {
+  return (
+    <ExcluirPessoaScreen
+      key={estado.pessoa.id}
+      pessoaId={estado.pessoa.id}
+      nomePessoa={estado.pessoa.nome}
+      demonstracao={demonstracao}
+
+      onCancelar={() =>
+        setExibindoExclusao(false)
+      }
+
+      onExcluir={
+        demonstracao
+          ? undefined
+          : excluirPessoa
+      }
+
+      onExcluido={() => {
+        setExibindoExclusao(false);
+        router.replace("/pessoas");
+      }}
+    />
+  );
+}
 
 if (editando && estado.status === "sucesso") {
   return (
@@ -253,7 +274,7 @@ if (editando && estado.status === "sucesso") {
             : undefined
         }
         onAbrirExclusao={
-          demonstracao && estado.status === "sucesso"
+            estado.status === "sucesso"
             ? () => setExibindoExclusao(true)
             : undefined
         }

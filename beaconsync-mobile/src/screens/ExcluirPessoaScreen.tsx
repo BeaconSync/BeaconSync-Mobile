@@ -35,10 +35,10 @@ export default function ExcluirPessoaScreen({
   onExcluido,
   onExcluir,
 }: Props) {
-  const { enviando, erro, excluir } = useExcluirPessoa(
-    pessoaId,
-    onExcluir
-  );
+    const { enviando, erro, excluir } = useExcluirPessoa(
+      pessoaId,
+      demonstracao ? undefined : onExcluir
+    );
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener(
