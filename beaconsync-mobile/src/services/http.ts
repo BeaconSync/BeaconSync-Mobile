@@ -8,38 +8,206 @@ export type Servico = keyof typeof urls;
 export type OpcoesHttp = {
   metodo?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   dados?: unknown;
+  formulario?: () => FormData;
+  retorno?: "json" | "imagem";
 };
 
 export class ErroApi extends Error {
   constructor(
-    public status: number,
+    public readonly status: number,
     mensagem: string,
+    public readonly dados: unknown = null
   ) {
     super(mensagem);
     this.name = "ErroApi";
   }
 }
 
-export function urlApi(servico: Servico) {
+function objeto(
+  valor: unknown
+): valor is Record<string, unknown> {
+  return typeof valor === "object" && valor !== null;
+}
+
+function textoPreenchido(
+  valor: unknown
+): valor is string {
+  return typeof valor === "string" && valor.trim().length > 0;
+}
+
+function mensagemPadrao(status: number): string {
+  switch (status) {
+    case 400:
+      return "Confira os dados informados.";
+    case 401:
+      return "Sua sessão precisa ser renovada.";
+    case 403:
+      return "Sua conta não tem permissão para esta operação.";
+    case 404:
+      return "O recurso solicitado não foi encontrado.";
+    case 409:
+      return "A operação conflita com um cadastro ou registro existente.";
+    case 422:
+      return "Não foi possível concluir a operação com os dados informados.";
+    case 429:
+      return "Muitas tentativas em pouco tempo. Aguarde e tente novamente.";
+    default:
+      return status >= 500
+        ? "O serviço está indisponível no momento."
+        : "Não foi possível concluir a solicitação.";
+  }
+}
+
+function obterMensagemErro(
+  corpo: unknown,
+  status: number
+): string {
+  if (!objeto(corpo)) {
+    return mensagemPadrao(status);
+  }
+
+  const mensagens: string[] = [];
+
+  // Java: { campos: [{ campo, mensagem }] }
+  if (Array.isArray(corpo.campos)) {
+    for (const item of corpo.campos) {
+      if (objeto(item) && textoPreenchido(item.mensagem)) {
+        mensagens.push(item.mensagem.trim());
+      }
+    }
+  }
+
+  // Também aceita erros de validação no formato:
+  // { errors: { campo: ["Mensagem"] } }
+  if (objeto(corpo.errors)) {
+    for (const valor of Object.values(corpo.errors)) {
+      if (Array.isArray(valor)) {
+        for (const mensagem of valor) {
+          if (textoPreenchido(mensagem)) {
+            mensagens.push(mensagem.trim());
+          }
+        }
+      } else if (textoPreenchido(valor)) {
+        mensagens.push(valor.trim());
+      }
+    }
+  }
+
+  if (mensagens.length > 0) {
+    return [...new Set(mensagens)].join("\n");
+  }
+
+  const mensagem = [
+    corpo.mensagem,
+    corpo.detail,
+    corpo.title,
+  ].find(textoPreenchido);
+
+  return mensagem?.trim() ?? mensagemPadrao(status);
+}
+
+export function urlApi(servico: Servico): string {
   const url = urls[servico]?.trim().replace(/\/+$/, "");
 
   if (!url || !/^https?:\/\//.test(url)) {
     throw new Error(
-      `Configure a URL da API ${servico} no arquivo .env.`,
+      `Configure a URL da API ${servico} no arquivo .env.`
     );
   }
 
   return url;
 }
 
+async function lerImagem(
+  resposta: Response,
+  signal: AbortSignal
+): Promise<string> {
+  const tipo = resposta.headers
+    .get("content-type")
+    ?.split(";")[0]
+    .trim();
+
+  if (tipo !== "image/jpeg" && tipo !== "image/png") {
+    throw new Error(
+      "A API não devolveu uma imagem válida."
+    );
+  }
+
+  const arquivo = await resposta.blob();
+
+  if (!arquivo.size || arquivo.size > 5 * 1024 * 1024) {
+    throw new Error(
+      "A foto recebida está vazia ou excede o tamanho permitido."
+    );
+  }
+
+  return new Promise<string>((resolve, reject) => {
+    const leitor = new FileReader();
+
+    const cancelar = () => {
+      leitor.abort();
+
+      reject(
+        new Error("A leitura da foto foi interrompida.")
+      );
+    };
+
+    leitor.onload = () => {
+      if (typeof leitor.result === "string") {
+        resolve(leitor.result);
+      } else {
+        reject(
+          new Error("Não foi possível ler a foto recebida.")
+        );
+      }
+    };
+
+    leitor.onerror = () => {
+      reject(
+        new Error("Não foi possível ler a foto recebida.")
+      );
+    };
+
+    leitor.onabort = () => {
+      reject(
+        new Error("A leitura da foto foi interrompida.")
+      );
+    };
+
+    leitor.onloadend = () => {
+      signal.removeEventListener("abort", cancelar);
+    };
+
+    if (signal.aborted) {
+      cancelar();
+      return;
+    }
+
+    signal.addEventListener("abort", cancelar, {
+      once: true,
+    });
+
+    leitor.readAsDataURL(arquivo);
+  });
+}
+
 export async function http<T>(
   servico: Servico,
   caminho: string,
   opcoes: OpcoesHttp = {},
-  token?: string,
+  token?: string
 ): Promise<T> {
   if (!caminho.startsWith("/api/v1/")) {
     throw new Error("Caminho de API inválido.");
+  }
+
+  if (
+    opcoes.formulario &&
+    opcoes.dados !== undefined
+  ) {
+    throw new Error(
+      "Envie JSON ou formulário, não os dois juntos."
+    );
   }
 
   const url = `${urlApi(servico)}${caminho}`;
@@ -47,7 +215,7 @@ export async function http<T>(
 
   const limite = setTimeout(
     () => controller.abort(),
-    20000,
+    20000
   );
 
   try {
@@ -56,7 +224,10 @@ export async function http<T>(
       signal: controller.signal,
 
       headers: {
-        Accept: "application/json",
+        Accept:
+          opcoes.retorno === "imagem"
+            ? "image/jpeg, image/png, application/json"
+            : "application/json",
 
         ...(opcoes.dados !== undefined
           ? { "Content-Type": "application/json" }
@@ -67,68 +238,67 @@ export async function http<T>(
           : {}),
       },
 
-      body:
-        opcoes.dados === undefined
+      body: opcoes.formulario
+        ? opcoes.formulario()
+        : opcoes.dados === undefined
           ? undefined
           : JSON.stringify(opcoes.dados),
     });
 
+    if (
+      resposta.ok &&
+      opcoes.retorno === "imagem"
+    ) {
+      return (
+        await lerImagem(resposta, controller.signal)
+      ) as T;
+    }
+
     const texto = await resposta.text();
 
-    let corpo: any = null;
+    let corpo: unknown = null;
+    let jsonValido = true;
 
-    try {
-      corpo = texto ? JSON.parse(texto) : null;
-    } catch {
-      // Uma resposta de erro pode não conter JSON.
+    if (texto.trim()) {
+      try {
+        corpo = JSON.parse(texto);
+      } catch {
+        jsonValido = false;
+      }
     }
 
     if (!resposta.ok) {
-      const mensagem = [
-        corpo?.mensagem,
-        corpo?.detail,
-        corpo?.title,
-      ].find(
-        (valor) =>
-          typeof valor === "string" && valor.trim(),
-      );
-
       throw new ErroApi(
         resposta.status,
-        mensagem ||
-          (resposta.status === 401
-            ? "E-mail, senha ou sessão inválidos."
-            : resposta.status === 403
-              ? "Você não tem permissão para esta ação."
-              : resposta.status === 429
-                ? "Muitas tentativas. Aguarde e tente novamente."
-                : `Não foi possível concluir a solicitação (${resposta.status}).`),
+        obterMensagemErro(corpo, resposta.status),
+        corpo
       );
     }
 
     if (
       resposta.status !== 204 &&
-      texto &&
-      corpo === null
+      !jsonValido
     ) {
       throw new Error(
-        "A API devolveu uma resposta inválida.",
+        "A API respondeu em um formato inesperado. Não foi possível interpretar o resultado."
       );
     }
 
     return corpo as T;
   } catch (erro) {
-    if (erro instanceof ErroApi) throw erro;
+    if (erro instanceof ErroApi) {
+      throw erro;
+    }
 
     if (controller.signal.aborted) {
       throw new Error(
-        "A API demorou para responder. Tente novamente.",
+        "A API demorou para responder. Não foi possível confirmar o resultado da solicitação."
       );
     }
 
     if (erro instanceof TypeError) {
       throw new Error(
-        "Não foi possível conectar à API. Confira a URL e sua conexão.",
+        "A conexão com a API falhou. Confira sua conexão e a URL configurada. Se estava salvando dados, verifique o resultado antes de repetir."
       );
     }
 
