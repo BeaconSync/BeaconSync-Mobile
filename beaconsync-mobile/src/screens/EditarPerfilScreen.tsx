@@ -41,17 +41,19 @@ export default function EditarPerfilScreen({
   onConcluido,
   onSalvar,
 }: Props) {
-  const {
+ const {
   nome,
+  email,
   telefone,
+  fotoPreview,
   papel,
   podeAlterarPapel,
-  fotoPreview,
   enviando,
   escolhendoFoto,
   bloqueado,
   erro,
   alterarNome,
+  alterarEmail,
   alterarTelefone,
   alterarPapel,
   escolherFoto,
@@ -342,15 +344,30 @@ export default function EditarPerfilScreen({
   </View>
 )}
 
-            <View style={styles.emailCard}>
-              <Text style={styles.label}>
-                E-mail da conta
-              </Text>
+<View style={styles.section}>
+  <Text style={styles.label}>
+    E-mail da conta
+  </Text>
 
-              <Text style={styles.email} selectable>
-                {perfil.email}
-              </Text>
-            </View>
+  <TextInput
+    value={email}
+    onChangeText={alterarEmail}
+    editable={!bloqueado}
+    maxLength={160}
+    keyboardType="email-address"
+    autoCapitalize="none"
+    autoCorrect={false}
+    autoComplete="email"
+    placeholder="seuemail@exemplo.com"
+    placeholderTextColor={colors.textSecondary}
+    accessibilityLabel="E-mail da conta"
+    style={styles.input}
+  />
+
+  <Text style={styles.helper}>
+    Após salvar, use o novo e-mail para entrar na sua conta.
+  </Text>
+</View>
 
             {erro && (
               <View
