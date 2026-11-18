@@ -15,6 +15,8 @@ import {
 
 import type { TextInputProps } from "react-native";
 
+import MonitoramentoConectado from "../components/MonitoramentoConectado";
+
 import {
   SafeAreaProvider,
   SafeAreaView,
@@ -211,12 +213,16 @@ export default function PainelVoluntarioScreen({
           </View>
 
           {vendoMapa ? (
-            <MapaMonitoramentoScreen
-              demonstracao={demonstracao}
-              estado={estadoMapa}
-              onAtualizar={onAtualizarMapa}
-            />
-          ) : (
+  demonstracao ? (
+    <MapaMonitoramentoScreen
+      demonstracao
+      estado={estadoMapa}
+      onAtualizar={onAtualizarMapa}
+    />
+  ) : (
+    <MonitoramentoConectado />
+  )
+) : (
             <ScrollView
               key={editando ? "edicao" : "painel"}
               style={styles.scroll}
