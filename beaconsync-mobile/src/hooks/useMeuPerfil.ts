@@ -4,81 +4,92 @@ import {
   useState,
 } from "react";
 
-import {
-  useFocusEffect,
-} from "expo-router";
+import { useFocusEffect } from "expo-router";
 
-import {
-  consultarMeuPerfil,
-} from "../services/perfil";
-
-import type {
-  EstadoPerfil,
-} from "../types/perfil";
+import { consultarMeuPerfil } from "../services/perfil";
+import { versaoSessao } from "../services/sessao";
+import type { EstadoPerfil } from "../types/perfil";
 
 import { useSessao } from "./useSessao";
 
-export function useMeuPerfil(
-  ativo = true,
-) {
+type ConsultaPerfil = {
+  versao: number;
+  estado: EstadoPerfil;
+};
+
+export function useMeuPerfil(ativo = true) {
   const { autenticado } = useSessao();
+  const versaoAtual = versaoSessao();
 
   const sequencia = useRef(0);
   const emFoco = useRef(false);
 
-  const [estado, setEstado] =
-    useState<EstadoPerfil>({
-      status: "indisponivel",
-    });
+  const [consulta, setConsulta] = useState<ConsultaPerfil>(
+    () => ({
+      versao: versaoAtual,
+      estado: { status: "indisponivel" },
+    }),
+  );
 
   const carregar = useCallback(async () => {
     if (!emFoco.current) return;
 
-    const consulta = ++sequencia.current;
+    const numero = ++sequencia.current;
+    const versao = versaoSessao();
+
+    // Não inicia uma consulta usando dados de uma renderização
+    // que pertence a outra sessão.
+    if (versao !== versaoAtual) return;
 
     if (!autenticado || !ativo) {
-      setEstado({
-        status: "indisponivel",
+      setConsulta({
+        versao,
+        estado: { status: "indisponivel" },
       });
 
       return;
     }
 
-    setEstado({
-      status: "carregando",
+    function consultaContinuaValida() {
+      return (
+        emFoco.current &&
+        numero === sequencia.current &&
+        versao === versaoSessao()
+      );
+    }
+
+    setConsulta({
+      versao,
+      estado: { status: "carregando" },
     });
 
     try {
-      const perfil =
-        await consultarMeuPerfil();
+      const perfil = await consultarMeuPerfil();
 
-      if (
-        consulta !== sequencia.current
-      ) {
-        return;
-      }
+      if (!consultaContinuaValida()) return;
 
-      setEstado({
-        status: "sucesso",
-        perfil,
+      setConsulta({
+        versao,
+        estado: {
+          status: "sucesso",
+          perfil,
+        },
       });
     } catch (erro) {
-      if (
-        consulta !== sequencia.current
-      ) {
-        return;
-      }
+      if (!consultaContinuaValida()) return;
 
-      setEstado({
-        status: "erro",
-
-        mensagem:
-          erro instanceof Error
-            ? erro.message
-            : "Não foi possível consultar seu perfil.",
+      setConsulta({
+        versao,
+        estado: {
+          status: "erro",
+          mensagem:
+            erro instanceof Error
+              ? erro.message
+              : "Não foi possível consultar seu perfil.",
+        },
       });
     }
-  }, [autenticado, ativo]);
+  }, [autenticado, ativo, versaoAtual]);
 
   useFocusEffect(
     useCallback(() => {
@@ -94,11 +105,11 @@ export function useMeuPerfil(
   );
 
   const estadoAtual: EstadoPerfil =
-    autenticado && ativo
-      ? estado
-      : {
-          status: "indisponivel",
-        };
+    autenticado &&
+    ativo &&
+    consulta.versao === versaoAtual
+      ? consulta.estado
+      : { status: "indisponivel" };
 
   return {
     estado: estadoAtual,
