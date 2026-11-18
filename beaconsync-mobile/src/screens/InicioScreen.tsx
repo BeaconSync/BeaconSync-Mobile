@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,6 +19,8 @@ type InicioScreenProps = {
   estadoPessoas?: EstadoPessoas;
   estadoAlertas?: EstadoAlertas;
   demonstracao?: boolean;
+  atualizando?: boolean;
+  onAtualizar?: () => void;
   onAbrirPerfil: () => void;
   onAbrirPessoas: () => void;
   onCadastrarPessoa: () => void;
@@ -65,6 +68,8 @@ export default function InicioScreen({
   estadoPessoas = { status: "indisponivel" },
   estadoAlertas = { status: "indisponivel" },
   demonstracao = false,
+  atualizando = false,
+  onAtualizar,
   onAbrirPerfil,
   onAbrirPessoas,
   onCadastrarPessoa,
@@ -144,9 +149,19 @@ export default function InicioScreen({
       edges={["top", "left", "right"]}
     >
       <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+  contentContainerStyle={styles.content}
+  showsVerticalScrollIndicator={false}
+  refreshControl={
+    onAtualizar && !demonstracao ? (
+      <RefreshControl
+        refreshing={atualizando}
+        onRefresh={onAtualizar}
+        tintColor={colors.primary}
+        colors={[colors.primary]}
+      />
+    ) : undefined
+  }
+>
         <View style={styles.header}>
           <View style={styles.brand}>
             <View style={styles.brandIcon}>
