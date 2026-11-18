@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useEffect } from "react";
 import {
   ActivityIndicator,
@@ -67,6 +67,9 @@ export default function InformarSituacaoScreen({
   contextoAlerta,
   onRegistrada,
 }: Props) {
+
+  const router = useRouter();
+
   const {
     status,
     enderecoId,
@@ -307,18 +310,27 @@ async function confirmar() {
             </View>
           )}
 
-          <Pressable
-  onPress={confirmar}
-  disabled={enviando || semAlerta}
+<Pressable
+  onPress={() => {
+    if (enviando) return;
+
+    if (semAlerta) {
+      Keyboard.dismiss();
+      router.replace("/alertas");
+      return;
+    }
+
+    void confirmar();
+  }}
+  disabled={enviando}
   accessibilityRole="button"
   accessibilityState={{
-    disabled: enviando || semAlerta,
+    disabled: enviando,
     busy: enviando,
   }}
   style={({ pressed }) => [
     styles.button,
-    (pressed || enviando || semAlerta) &&
-      styles.disabled,
+    (pressed || enviando) && styles.disabled,
   ]}
 >
   {enviando && (
@@ -326,7 +338,11 @@ async function confirmar() {
   )}
 
   <Text style={styles.buttonText}>
-    {enviando ? "Enviando..." : "Registrar situação"}
+    {enviando
+      ? "Enviando..."
+      : semAlerta
+        ? "Escolher um alerta"
+        : "Registrar situação"}
   </Text>
 </Pressable>
 
