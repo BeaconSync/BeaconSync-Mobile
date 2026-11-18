@@ -1,5 +1,9 @@
 import { api } from "./api";
-import { versaoSessao } from "./sessao";
+
+import {
+  renovarTokenAposTrocaPerfil,
+  versaoSessao,
+} from "./sessao";
 
 import {
   consultarMeuPerfil,
@@ -23,13 +27,13 @@ export function criarSalvamentoDadosPerfil(
   return async (dados) => {
     const versao = versaoSessao();
 
-    const conferirSessao = () => {
+    function conferirSessao() {
       if (versaoSessao() !== versao) {
         throw new Error(
           "A sessão mudou. Consulte novamente seu perfil."
         );
       }
-    };
+    }
 
     const nome = dados.nome.trim();
     const telefone = (dados.telefone ?? "").trim();
@@ -46,7 +50,29 @@ export function criarSalvamentoDadosPerfil(
       );
     }
 
-    // Prepara a imagem antes de enviar qualquer alteração.
+    const alterandoPapel =
+      dados.papel !== undefined &&
+      dados.papel !== perfilAtual.papel;
+
+    if (
+      dados.papel !== undefined &&
+      (
+        (
+          dados.papel !== "RESPONSAVEL" &&
+          dados.papel !== "VOLUNTARIO"
+        ) ||
+        (
+          perfilAtual.papel !== "RESPONSAVEL" &&
+          perfilAtual.papel !== "VOLUNTARIO"
+        )
+      )
+    ) {
+      throw new Error(
+        "Esta conta não permite trocar o tipo de perfil por esta opção."
+      );
+    }
+
+    // Prepara a imagem antes de enviar alterações.
     let formulario: (() => FormData) | undefined;
 
     if (dados.foto.acao === "substituir") {
@@ -71,6 +97,9 @@ export function criarSalvamentoDadosPerfil(
         dados: {
           nome,
           telefone,
+          ...(alterandoPapel
+            ? { papel: dados.papel }
+            : {}),
         },
       }
     );
@@ -84,6 +113,29 @@ export function criarSalvamentoDadosPerfil(
       throw new Error(
         "Não foi possível confirmar a conta atualizada. Consulte novamente seu perfil."
       );
+    }
+
+    if (
+      alterandoPapel &&
+      salvo.papel !== dados.papel
+    ) {
+      throw new Error(
+        "A API não confirmou a troca de perfil. Nome e telefone podem ter sido salvos. Feche e reabra o perfil para conferir."
+      );
+    }
+
+    if (
+      alterandoPapel ||
+      salvo.papel !== perfilAtual.papel
+    ) {
+      try {
+        await renovarTokenAposTrocaPerfil();
+        conferirSessao();
+      } catch {
+        throw new Error(
+          "O perfil foi salvo, mas não foi possível atualizar a sessão. Saia da conta e entre novamente antes de continuar."
+        );
+      }
     }
 
     try {
@@ -122,7 +174,7 @@ export function criarSalvamentoDadosPerfil(
           : "";
 
       throw new Error(
-        "Nome e telefone foram salvos, mas não foi possível confirmar a alteração da foto." +
+        "Os dados do perfil foram salvos, mas não foi possível confirmar a alteração da foto." +
           detalhe +
           " Feche e reabra a tela Perfil para conferir antes de tentar novamente."
       );
@@ -131,14 +183,20 @@ export function criarSalvamentoDadosPerfil(
     try {
       conferirSessao();
 
-      const atualizado =
-        await consultarMeuPerfil();
+      const atualizado = await consultarMeuPerfil();
 
       conferirSessao();
 
       if (atualizado.id !== perfilAtual.id) {
+        throw new Error("A conta consultada mudou.");
+      }
+
+      if (
+        alterandoPapel &&
+        atualizado.papel !== dados.papel
+      ) {
         throw new Error(
-          "A conta consultada mudou."
+          "O perfil consultado não corresponde ao tipo solicitado."
         );
       }
 

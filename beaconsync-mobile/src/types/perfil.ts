@@ -1,3 +1,5 @@
+export type PapelEditavel = "RESPONSAVEL" | "VOLUNTARIO";
+
 export type DadosPerfil = {
   id: string;
   nome: string;
@@ -28,9 +30,9 @@ export type DadosEdicaoPerfil = Pick<
   "nome" | "telefone"
 > & {
   foto: AlteracaoFotoPerfil;
+  papel?: PapelEditavel;
 };
 
 export type SalvarPerfil = (
   dados: DadosEdicaoPerfil
 ) => Promise<DadosPerfil>;
-

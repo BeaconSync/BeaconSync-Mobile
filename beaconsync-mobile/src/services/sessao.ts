@@ -231,6 +231,21 @@ export function entrarDemonstracao() {
   });
 }
 
+export async function renovarTokenAposTrocaPerfil(): Promise<string> {
+  const versao = versaoSessao();
+  const pendente = renovacao;
+
+  if (pendente) {
+    await pendente;
+  }
+
+  if (versaoSessao() !== versao) {
+    throw new Error("A sessão mudou. Entre novamente.");
+  }
+
+  return renovarToken();
+}
+
 async function limparSessao() {
   const versao = ++geracao;
   const anterior = tokens;
