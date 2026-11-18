@@ -22,7 +22,7 @@ import type {
 } from "../types/perfil";
 
 export function criarSalvamentoDadosPerfil(
-  perfilAtual: DadosPerfil
+  perfilAtual: DadosPerfil,
 ): SalvarPerfil {
   return async (dados) => {
     const versao = versaoSessao();
@@ -30,7 +30,7 @@ export function criarSalvamentoDadosPerfil(
     function conferirSessao() {
       if (versaoSessao() !== versao) {
         throw new Error(
-          "A sessão mudou. Consulte novamente seu perfil."
+          "A sessão mudou. Consulte novamente seu perfil.",
         );
       }
     }
@@ -38,17 +38,33 @@ export function criarSalvamentoDadosPerfil(
     const nome = dados.nome.trim();
     const telefone = (dados.telefone ?? "").trim();
 
+    const email = (dados.email ?? perfilAtual.email)
+      .trim()
+      .toLowerCase();
+
     if (nome.length < 2 || nome.length > 120) {
       throw new Error(
-        "Informe seu nome com 2 a 120 caracteres."
+        "Informe seu nome com 2 a 120 caracteres.",
+      );
+    }
+
+    if (
+      email.length > 160 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ) {
+      throw new Error(
+        "Informe um e-mail válido com até 160 caracteres.",
       );
     }
 
     if (!/^\d{10,11}$/.test(telefone)) {
       throw new Error(
-        "Informe um telefone com DDD e 10 ou 11 números."
+        "Informe um telefone com DDD e 10 ou 11 números.",
       );
     }
+
+    const alterandoEmail =
+      email !== perfilAtual.email.trim().toLowerCase();
 
     const alterandoPapel =
       dados.papel !== undefined &&
@@ -68,21 +84,21 @@ export function criarSalvamentoDadosPerfil(
       )
     ) {
       throw new Error(
-        "Esta conta não permite trocar o tipo de perfil por esta opção."
+        "Esta conta não permite trocar o tipo de perfil por esta opção.",
       );
     }
 
-    // Prepara a imagem antes de enviar alterações.
+    // Prepara a imagem antes de enviar alterações à API.
     let formulario: (() => FormData) | undefined;
 
     if (dados.foto.acao === "substituir") {
       try {
         formulario = await prepararFotoPerfil(
-          dados.foto.uri
+          dados.foto.uri,
         );
       } catch {
         throw new Error(
-          "Não foi possível preparar a foto. Escolha outra imagem. Nenhuma alteração foi enviada."
+          "Não foi possível preparar a foto. Escolha outra imagem. Nenhuma alteração foi enviada.",
         );
       }
     }
@@ -97,11 +113,14 @@ export function criarSalvamentoDadosPerfil(
         dados: {
           nome,
           telefone,
+
+          ...(alterandoEmail ? { email } : {}),
+
           ...(alterandoPapel
             ? { papel: dados.papel }
             : {}),
         },
-      }
+      },
     );
 
     conferirSessao();
@@ -111,7 +130,7 @@ export function criarSalvamentoDadosPerfil(
 
     if (salvo.id !== perfilAtual.id) {
       throw new Error(
-        "Não foi possível confirmar a conta atualizada. Consulte novamente seu perfil."
+        "Não foi possível confirmar a conta atualizada. Consulte novamente seu perfil.",
       );
     }
 
@@ -120,12 +139,22 @@ export function criarSalvamentoDadosPerfil(
       salvo.papel !== dados.papel
     ) {
       throw new Error(
-        "A API não confirmou a troca de perfil. Nome e telefone podem ter sido salvos. Feche e reabra o perfil para conferir."
+        "A API não confirmou a troca de perfil. Outros dados podem ter sido salvos. Feche e reabra o perfil para conferir.",
+      );
+    }
+
+    if (
+      alterandoEmail &&
+      salvo.email.trim().toLowerCase() !== email
+    ) {
+      throw new Error(
+        "A API não confirmou a alteração do e-mail. Outros dados podem ter sido salvos. Feche e reabra o perfil para conferir.",
       );
     }
 
     if (
       alterandoPapel ||
+      alterandoEmail ||
       salvo.papel !== perfilAtual.papel
     ) {
       try {
@@ -133,7 +162,7 @@ export function criarSalvamentoDadosPerfil(
         conferirSessao();
       } catch {
         throw new Error(
-          "O perfil foi salvo, mas não foi possível atualizar a sessão. Saia da conta e entre novamente antes de continuar."
+          "O perfil foi salvo, mas não foi possível atualizar a sessão. Saia da conta e entre novamente.",
         );
       }
     }
@@ -155,7 +184,7 @@ export function criarSalvamentoDadosPerfil(
           !enviado.temFoto
         ) {
           throw new Error(
-            "A API não confirmou a foto enviada."
+            "A API não confirmou a foto enviada.",
           );
         }
       } else if (dados.foto.acao === "remover") {
@@ -176,19 +205,22 @@ export function criarSalvamentoDadosPerfil(
       throw new Error(
         "Os dados do perfil foram salvos, mas não foi possível confirmar a alteração da foto." +
           detalhe +
-          " Feche e reabra a tela Perfil para conferir antes de tentar novamente."
+          " Feche e reabra a tela Perfil para conferir antes de tentar novamente.",
       );
     }
 
     try {
       conferirSessao();
 
-      const atualizado = await consultarMeuPerfil();
+      const atualizado =
+        await consultarMeuPerfil();
 
       conferirSessao();
 
       if (atualizado.id !== perfilAtual.id) {
-        throw new Error("A conta consultada mudou.");
+        throw new Error(
+          "A conta consultada mudou.",
+        );
       }
 
       if (
@@ -196,7 +228,16 @@ export function criarSalvamentoDadosPerfil(
         atualizado.papel !== dados.papel
       ) {
         throw new Error(
-          "O perfil consultado não corresponde ao tipo solicitado."
+          "O perfil consultado não corresponde ao tipo solicitado.",
+        );
+      }
+
+      if (
+        alterandoEmail &&
+        atualizado.email.trim().toLowerCase() !== email
+      ) {
+        throw new Error(
+          "O e-mail consultado não corresponde ao solicitado.",
         );
       }
 
@@ -205,7 +246,7 @@ export function criarSalvamentoDadosPerfil(
       conferirSessao();
 
       throw new Error(
-        "A API confirmou o salvamento, mas não foi possível recarregar o perfil. Feche e reabra a tela Perfil para consultar os dados salvos."
+        "A API confirmou o salvamento, mas não foi possível recarregar o perfil. Feche e reabra a tela Perfil para consultar os dados salvos.",
       );
     }
   };

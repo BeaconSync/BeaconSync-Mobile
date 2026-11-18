@@ -29,6 +29,7 @@ export type DadosEdicaoPerfil = Pick<
   DadosPerfil,
   "nome" | "telefone"
 > & {
+  email?: string;
   foto: AlteracaoFotoPerfil;
   papel?: PapelEditavel;
 };

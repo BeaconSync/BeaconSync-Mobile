@@ -24,11 +24,13 @@ function normalizarTelefone(valor: string) {
 
 export function useEditarPerfil(
   perfil: DadosPerfil,
-  onSalvar?: SalvarPerfil
+  onSalvar?: SalvarPerfil,
 ) {
   const [nome, setNome] = useState(perfil.nome);
+  const [email, setEmail] = useState(perfil.email);
+
   const [telefone, setTelefone] = useState(
-    perfil.telefone ?? ""
+    perfil.telefone ?? "",
   );
 
   const podeAlterarPapel =
@@ -40,7 +42,7 @@ export function useEditarPerfil(
       perfil.papel === "RESPONSAVEL" ||
       perfil.papel === "VOLUNTARIO"
         ? perfil.papel
-        : null
+        : null,
   );
 
   const [foto, setFoto] = useState<AlteracaoFotoPerfil>({
@@ -66,6 +68,13 @@ export function useEditarPerfil(
     if (operacaoEmAndamento.current) return;
 
     setNome(valor);
+    setErro(null);
+  }
+
+  function alterarEmail(valor: string) {
+    if (operacaoEmAndamento.current) return;
+
+    setEmail(valor);
     setErro(null);
   }
 
@@ -118,7 +127,7 @@ export function useEditarPerfil(
 
       if (!imagem?.uri) {
         setErro(
-          "Não foi possível carregar a foto selecionada."
+          "Não foi possível carregar a foto selecionada.",
         );
         return;
       }
@@ -131,7 +140,7 @@ export function useEditarPerfil(
       });
     } catch {
       setErro(
-        "Não foi possível abrir ou selecionar a foto. Tente novamente."
+        "Não foi possível abrir ou selecionar a foto. Tente novamente.",
       );
     } finally {
       operacaoEmAndamento.current = false;
@@ -145,7 +154,7 @@ export function useEditarPerfil(
     setFoto(
       perfil.fotoUrl
         ? { acao: "remover" }
-        : { acao: "manter" }
+        : { acao: "manter" },
     );
 
     setErro(null);
@@ -157,6 +166,7 @@ export function useEditarPerfil(
     setErro(null);
 
     const nomeTratado = nome.trim();
+    const emailTratado = email.trim().toLowerCase();
     const telefoneTratado = normalizarTelefone(telefone);
 
     if (
@@ -167,9 +177,18 @@ export function useEditarPerfil(
       return null;
     }
 
-    const caracteresValidos = /^[\d\s()+-]+$/.test(
-      telefone
-    );
+    if (
+      emailTratado.length > 160 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTratado)
+    ) {
+      setErro(
+        "Informe um e-mail válido com até 160 caracteres.",
+      );
+      return null;
+    }
+
+    const caracteresValidos =
+      /^[\d\s()+-]+$/.test(telefone);
 
     const tamanhoValido =
       telefoneTratado.length === 10 ||
@@ -177,14 +196,14 @@ export function useEditarPerfil(
 
     if (!caracteresValidos || !tamanhoValido) {
       setErro(
-        "Informe um telefone brasileiro com DDD e 10 ou 11 números."
+        "Informe um telefone brasileiro com DDD e 10 ou 11 números.",
       );
       return null;
     }
 
     if (!onSalvar) {
       setErro(
-        "A edição está indisponível no momento. Nenhuma alteração, incluindo a foto, foi salva."
+        "A edição está indisponível no momento. Nenhuma alteração, incluindo a foto, foi salva.",
       );
       return null;
     }
@@ -195,8 +214,10 @@ export function useEditarPerfil(
     try {
       const atualizado = await onSalvar({
         nome: nomeTratado,
+        email: emailTratado,
         telefone: telefoneTratado,
         foto,
+
         ...(podeAlterarPapel &&
         papel &&
         papel !== perfil.papel
@@ -209,7 +230,7 @@ export function useEditarPerfil(
       setErro(
         erro instanceof Error
           ? erro.message
-          : "Não foi possível confirmar a atualização. Seus dados continuam preenchidos."
+          : "Não foi possível confirmar a atualização. Seus dados continuam preenchidos.",
       );
 
       return null;
@@ -221,15 +242,17 @@ export function useEditarPerfil(
 
   return {
     nome,
+    email,
     telefone,
+    fotoPreview,
     papel,
     podeAlterarPapel,
-    fotoPreview,
     enviando,
     escolhendoFoto,
     bloqueado,
     erro,
     alterarNome,
+    alterarEmail,
     alterarTelefone,
     alterarPapel,
     escolherFoto,
