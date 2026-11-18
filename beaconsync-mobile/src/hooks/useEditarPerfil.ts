@@ -5,6 +5,7 @@ import { Keyboard } from "react-native";
 import type {
   AlteracaoFotoPerfil,
   DadosPerfil,
+  PapelEditavel,
   SalvarPerfil,
 } from "../types/perfil";
 
@@ -28,6 +29,18 @@ export function useEditarPerfil(
   const [nome, setNome] = useState(perfil.nome);
   const [telefone, setTelefone] = useState(
     perfil.telefone ?? ""
+  );
+
+  const podeAlterarPapel =
+    perfil.papel === "RESPONSAVEL" ||
+    perfil.papel === "VOLUNTARIO";
+
+  const [papel, setPapel] = useState<PapelEditavel | null>(
+    () =>
+      perfil.papel === "RESPONSAVEL" ||
+      perfil.papel === "VOLUNTARIO"
+        ? perfil.papel
+        : null
   );
 
   const [foto, setFoto] = useState<AlteracaoFotoPerfil>({
@@ -63,6 +76,25 @@ export function useEditarPerfil(
     setErro(null);
   }
 
+  function alterarPapel(valor: PapelEditavel) {
+    if (
+      operacaoEmAndamento.current ||
+      !podeAlterarPapel
+    ) {
+      return;
+    }
+
+    if (
+      valor !== "RESPONSAVEL" &&
+      valor !== "VOLUNTARIO"
+    ) {
+      return;
+    }
+
+    setPapel(valor);
+    setErro(null);
+  }
+
   async function escolherFoto() {
     if (operacaoEmAndamento.current) return;
 
@@ -85,7 +117,9 @@ export function useEditarPerfil(
       const imagem = resultado.assets[0];
 
       if (!imagem?.uri) {
-        setErro("Não foi possível carregar a foto selecionada.");
+        setErro(
+          "Não foi possível carregar a foto selecionada."
+        );
         return;
       }
 
@@ -125,24 +159,27 @@ export function useEditarPerfil(
     const nomeTratado = nome.trim();
     const telefoneTratado = normalizarTelefone(telefone);
 
-    if (nomeTratado.length < 2 || nomeTratado.length > 120) {
+    if (
+      nomeTratado.length < 2 ||
+      nomeTratado.length > 120
+    ) {
       setErro("Informe seu nome com 2 a 120 caracteres.");
       return null;
     }
 
-const caracteresValidos = /^[\d\s()+-]+$/.test(telefone);
+    const caracteresValidos = /^[\d\s()+-]+$/.test(
+      telefone
+    );
 
-const tamanhoValido =
-  telefoneTratado.length === 10 ||
-  telefoneTratado.length === 11;
+    const tamanhoValido =
+      telefoneTratado.length === 10 ||
+      telefoneTratado.length === 11;
 
-if (!caracteresValidos || !tamanhoValido) {
-  setErro(
-    "Informe um telefone brasileiro com DDD e 10 ou 11 números."
-  );
-
-  return null;
-
+    if (!caracteresValidos || !tamanhoValido) {
+      setErro(
+        "Informe um telefone brasileiro com DDD e 10 ou 11 números."
+      );
+      return null;
     }
 
     if (!onSalvar) {
@@ -158,28 +195,35 @@ if (!caracteresValidos || !tamanhoValido) {
     try {
       const atualizado = await onSalvar({
         nome: nomeTratado,
-        telefone: telefoneTratado || null,
+        telefone: telefoneTratado,
         foto,
+        ...(podeAlterarPapel &&
+        papel &&
+        papel !== perfil.papel
+          ? { papel }
+          : {}),
       });
 
       return atualizado;
     } catch (erro) {
-  setErro(
-    erro instanceof Error
-      ? erro.message
-      : "Não foi possível confirmar a atualização. Seus dados continuam preenchidos."
-  );
+      setErro(
+        erro instanceof Error
+          ? erro.message
+          : "Não foi possível confirmar a atualização. Seus dados continuam preenchidos."
+      );
 
-  return null;
-} finally {
-  operacaoEmAndamento.current = false;
-  setEnviando(false);
-}
+      return null;
+    } finally {
+      operacaoEmAndamento.current = false;
+      setEnviando(false);
+    }
   }
 
   return {
     nome,
     telefone,
+    papel,
+    podeAlterarPapel,
     fotoPreview,
     enviando,
     escolhendoFoto,
@@ -187,6 +231,7 @@ if (!caracteresValidos || !tamanhoValido) {
     erro,
     alterarNome,
     alterarTelefone,
+    alterarPapel,
     escolherFoto,
     removerFoto,
     salvar,

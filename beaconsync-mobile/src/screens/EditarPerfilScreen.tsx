@@ -42,19 +42,22 @@ export default function EditarPerfilScreen({
   onSalvar,
 }: Props) {
   const {
-    nome,
-    telefone,
-    fotoPreview,
-    enviando,
-    escolhendoFoto,
-    bloqueado,
-    erro,
-    alterarNome,
-    alterarTelefone,
-    escolherFoto,
-    removerFoto,
-    salvar,
-  } = useEditarPerfil(perfil, onSalvar);
+  nome,
+  telefone,
+  papel,
+  podeAlterarPapel,
+  fotoPreview,
+  enviando,
+  escolhendoFoto,
+  bloqueado,
+  erro,
+  alterarNome,
+  alterarTelefone,
+  alterarPapel,
+  escolherFoto,
+  removerFoto,
+  salvar,
+} = useEditarPerfil(perfil, onSalvar);
 
   const [fotoFalhou, setFotoFalhou] = useState(false);
 
@@ -257,6 +260,87 @@ export default function EditarPerfilScreen({
                 Informe um telefone brasileiro com DDD.
               </Text>
             </View>
+
+            {podeAlterarPapel && (
+  <View style={styles.section}>
+    <Text style={styles.label}>
+      Tipo de perfil
+    </Text>
+
+    <Text style={styles.helper}>
+      Os dois tipos podem cadastrar e acompanhar pessoas.
+    </Text>
+
+    {(
+      [
+        {
+          valor: "RESPONSAVEL",
+          titulo: "Responsável",
+          descricao:
+            "Acompanhe familiares e outras pessoas com quem você tem vínculo.",
+        },
+        {
+          valor: "VOLUNTARIO",
+          titulo: "Voluntário",
+          descricao:
+            "Além de acompanhar pessoas, participe das atividades de voluntariado.",
+        },
+      ] as const
+    ).map((opcao) => {
+      const selecionado = papel === opcao.valor;
+
+      return (
+        <Pressable
+          key={opcao.valor}
+          onPress={() => alterarPapel(opcao.valor)}
+          disabled={bloqueado}
+          accessibilityRole="radio"
+          accessibilityLabel={opcao.titulo}
+          accessibilityState={{
+            checked: selecionado,
+            disabled: bloqueado,
+          }}
+          style={({ pressed }) => [
+            styles.roleOption,
+            selecionado && styles.roleOptionSelected,
+            (pressed || bloqueado) && styles.disabled,
+          ]}
+        >
+          <View
+            style={[
+              styles.roleRadio,
+              selecionado && styles.roleRadioSelected,
+            ]}
+          >
+            {selecionado && (
+              <View style={styles.roleRadioDot} />
+            )}
+          </View>
+
+          <View style={styles.roleTexts}>
+            <Text style={styles.label}>
+              {opcao.titulo}
+            </Text>
+
+            <Text style={styles.helper}>
+              {opcao.descricao}
+            </Text>
+          </View>
+        </Pressable>
+      );
+    })}
+
+    {papel !== perfil.papel && (
+      <View style={styles.infoBox}>
+        <Text style={styles.infoText}>
+          Seus vínculos e históricos serão mantidos.
+          A disponibilidade de voluntário ficará pausada
+          após a troca.
+        </Text>
+      </View>
+    )}
+  </View>
+)}
 
             <View style={styles.emailCard}>
               <Text style={styles.label}>
@@ -488,4 +572,41 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
+  roleOption: {
+  minHeight: 76,
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 12,
+  padding: 16,
+  borderWidth: 1,
+  borderColor: colors.border,
+  borderRadius: 14,
+  backgroundColor: colors.surface,
+},
+roleOptionSelected: {
+  borderColor: colors.primary,
+  backgroundColor: colors.primaryLight,
+},
+roleRadio: {
+  width: 22,
+  height: 22,
+  borderRadius: 11,
+  borderWidth: 2,
+  borderColor: colors.border,
+  alignItems: "center",
+  justifyContent: "center",
+},
+roleRadioSelected: {
+  borderColor: colors.primary,
+},
+roleRadioDot: {
+  width: 10,
+  height: 10,
+  borderRadius: 5,
+  backgroundColor: colors.primary,
+},
+roleTexts: {
+  flex: 1,
+  gap: 5,
+},
 });

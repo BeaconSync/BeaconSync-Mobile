@@ -218,7 +218,12 @@ export default function PerfilRoute() {
           }-${estado.perfil.id}`}
           perfil={estado.perfil}
           demonstracao={demonstracao}
-          onCancelar={() => setEditando(false)}
+          onCancelar={() => {
+          setEditando(false);
+          if (!demonstracao) {
+          void recarregar();
+        }
+      }}
           onConcluido={concluirEdicao}
           onSalvar={
             demonstracao
