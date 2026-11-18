@@ -13,7 +13,7 @@ import type {
 } from "../types/pessoa";
 import { useSessao } from "./useSessao";
 
-export function usePessoasAcompanhadas() {
+export function usePessoasAcompanhadas(ativo = true) {
   const { autenticado } = useSessao();
 
   const [estado, setEstado] = useState<EstadoPessoas>({
@@ -28,7 +28,7 @@ export function usePessoasAcompanhadas() {
 
     const consultaAtual = ++sequencia.current;
 
-    if (!autenticado) {
+    if (!autenticado || !ativo) {
       setEstado({ status: "indisponivel" });
       return;
     }
@@ -94,7 +94,7 @@ export function usePessoasAcompanhadas() {
         mensagem,
       });
     }
-  }, [autenticado]);
+  }, [autenticado, ativo]);
 
   useFocusEffect(
     useCallback(() => {
@@ -112,10 +112,11 @@ export function usePessoasAcompanhadas() {
     void carregar();
   }
 
-  return {
-    estado: autenticado
+return {
+  estado:
+    autenticado && ativo
       ? estado
       : ({ status: "indisponivel" } as const),
-    recarregar,
-  };
+  recarregar,
+};
 }
