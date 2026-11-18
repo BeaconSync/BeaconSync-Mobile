@@ -1,6 +1,6 @@
 import { api } from "./api";
 import { versaoSessao } from "./sessao";
-
+import { normalizarPaginaJava } from "./paginacaoJava";
 import type { Alerta } from "../types/alerta";
 
 function objeto(
@@ -89,10 +89,12 @@ export async function consultarAlertas():
       throw new Error("A sessão foi alterada.");
     }
 
-    const resposta = await api<unknown>(
-      "java",
-      `/api/v1/alertas?page=${pagina}&size=50&sort=emitidoEm,desc&sort=id,desc`
-    );
+const resposta = normalizarPaginaJava(
+  await api<unknown>(
+    "java",
+    `/api/v1/alertas?page=${pagina}&size=50&sort=emitidoEm,desc&sort=id,desc`
+  )
+);
 
     if (versao !== versaoSessao()) {
       throw new Error("A sessão foi alterada.");

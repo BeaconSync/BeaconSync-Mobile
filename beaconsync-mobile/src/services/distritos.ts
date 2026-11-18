@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { normalizarPaginaJava } from "./paginacaoJava";
 
 export type Distrito = {
   id: number;
@@ -63,10 +64,12 @@ export async function consultarDistritos(): Promise<Distrito[]> {
   let numeroPagina = 0;
 
   while (true) {
-    const resposta = await api<unknown>(
-      "java",
-      `/api/v1/distritos?page=${numeroPagina}&size=100&sort=nome,asc&sort=id,asc`
-    );
+    const resposta = normalizarPaginaJava(
+  await api<unknown>(
+    "java",
+    `/api/v1/distritos?page=${numeroPagina}&size=100&sort=nome,asc&sort=id,asc`
+  )
+);
 
     if (
       !paginaValida(resposta) ||

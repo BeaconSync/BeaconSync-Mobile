@@ -5,6 +5,7 @@ import type {
   EnderecoDetalhesPessoa,
   PessoaDetalhes,
 } from "../types/detalhaPessoa";
+import { normalizarPaginaJava } from "./paginacaoJava";
 
 type EnderecoResumoApi = {
   apelido: string | null;
@@ -139,7 +140,6 @@ function pessoaDetalhesValida(
 ): valor is PessoaDetalhesApi {
   if (!objeto(valor)) return false;
 
-  // Verifica enderecos antes de restringir a PessoaApi.
   return (
     Array.isArray(valor.enderecos) &&
     valor.enderecos.every(enderecoDetalheValido) &&
@@ -154,10 +154,12 @@ export async function consultarPaginaPessoas(
     throw new Error("A página solicitada é inválida.");
   }
 
-  const resposta = await api<unknown>(
+const resposta = normalizarPaginaJava(
+  await api<unknown>(
     "java",
     `/api/v1/pessoas?page=${pagina}&size=20&sort=nome,asc&sort=id,asc`
-  );
+  )
+);
 
   if (
     !paginaValida(resposta) ||
