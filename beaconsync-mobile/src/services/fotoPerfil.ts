@@ -9,6 +9,7 @@ import { api } from "./api";
 import { ErroApi } from "./http";
 
 const CAMINHO = "/api/v1/usuarios/me/foto";
+const LIMITE_BYTES = 2 * 1024 * 1024;
 
 export async function prepararFotoPerfil(
   uri: string
@@ -35,66 +36,70 @@ export async function prepararFotoPerfil(
   const resultado = await imagem.saveAsync({
     format: SaveFormat.JPEG,
     compress: 0.75,
-    base64: true,
+    base64: Platform.OS === "web",
   });
 
-  if (!resultado.base64) {
+  if (Platform.OS === "web") {
+    if (!resultado.base64) {
+      throw new Error(
+        "Não foi possível preparar a foto. Escolha outra imagem."
+      );
+    }
+
+    const resposta = await fetch(
+      `data:image/jpeg;base64,${resultado.base64}`
+    );
+
+    const arquivo = await resposta.blob();
+
+    validarTamanho(arquivo.size);
+
+    return () => {
+      const formulario = new FormData();
+
+      formulario.append(
+        "arquivo",
+        arquivo,
+        "perfil.jpg"
+      );
+
+      return formulario;
+    };
+  }
+
+  // No celular, usamos um arquivo que o Expo consegue
+  // ler e enviar como parte do formulário.
+  const { File } = await import("expo-file-system");
+
+  const arquivo = new File(resultado.uri);
+
+  if (!arquivo.exists) {
     throw new Error(
-      "Não foi possível preparar a foto. Escolha outra imagem."
+      "A foto preparada não foi encontrada. Selecione a imagem novamente."
     );
   }
 
-  const base64 = resultado.base64;
+  validarTamanho(arquivo.size);
 
-  const padding = base64.endsWith("==")
-    ? 2
-    : base64.endsWith("=")
-      ? 1
-      : 0;
+  return () => {
+    const formulario = new FormData();
 
-  const bytes =
-    Math.floor((base64.length * 3) / 4) - padding;
+    formulario.append("arquivo", arquivo);
 
-  if (bytes <= 0 || bytes > 2 * 1024 * 1024) {
+    return formulario;
+  };
+}
+
+function validarTamanho(bytes: number) {
+  if (
+    !Number.isFinite(bytes) ||
+    bytes <= 0 ||
+    bytes > LIMITE_BYTES
+  ) {
     throw new Error(
       "A foto precisa ter até 2 MB após a conversão. Escolha outra imagem."
     );
   }
-
-  const arquivoWeb =
-    Platform.OS === "web"
-      ? await (
-          await fetch(
-            `data:image/jpeg;base64,${base64}`
-          )
-        ).blob()
-      : null;
-
-  // Cria outro formulário se a chamada precisar
-  // ser repetida após a renovação do token.
-  return () => {
-    const formulario = new FormData();
-
-    if (arquivoWeb) {
-      formulario.append(
-        "arquivo",
-        arquivoWeb,
-        "perfil.jpg"
-      );
-    } else {
-      // Arquivo local no formato esperado pelo React Native.
-      formulario.append(
-        "arquivo",
-        {
-          uri: resultado.uri,
-          name: "perfil.jpg",
-          type: "image/jpeg",
-        } as unknown as Blob
-      );
-    }
-
-    return formulario;
-  };
 }
 
 export async function consultarFotoPerfil():

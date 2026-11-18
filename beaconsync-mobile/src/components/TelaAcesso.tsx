@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import type { ReactNode } from "react";
+
 import CampoFormulario from "./CampoFormulario";
 import {
   useAcessoForm,
@@ -22,35 +24,47 @@ import { colors } from "../theme/colors";
 
 type TelaAcessoProps = AcoesAcesso & {
   modo: "login" | "cadastro";
+  bloqueado?: boolean;
+  renderizarCadastro?: (enviando: boolean) => ReactNode;
+  onCadastroConcluido?: () => void;
 };
 
 export default function TelaAcesso({
   modo,
   onLogin,
   onCadastro,
+  bloqueado = false,
+  renderizarCadastro,
+  onCadastroConcluido,
 }: TelaAcessoProps) {
   const router = useRouter();
   const cadastro = modo === "cadastro";
 
-  const {
-    dados,
-    erros,
-    mensagem,
-    enviando,
-    alterarCampo,
-    enviar,
-  } = useAcessoForm({
-    modo,
-    onLogin,
-    onCadastro,
-  });
+const {
+  dados,
+  erros,
+  mensagem,
+  enviando: enviandoFormulario,
+  alterarCampo,
+  enviar,
+} = useAcessoForm({
+  modo,
+  onLogin,
+  onCadastro,
+});
 
-  function irParaLogin() {
-    Keyboard.dismiss();
-    router.replace("/login");
-  }
+const enviando = enviandoFormulario || bloqueado;
+
+function irParaLogin() {
+  if (enviando) return;
+
+  Keyboard.dismiss();
+  router.replace("/login");
+}
 
 async function confirmar() {
+  if (enviando) return;
+
   Keyboard.dismiss();
 
   const sucesso = await enviar();
@@ -60,10 +74,14 @@ async function confirmar() {
   if (cadastro) {
     router.replace("/login");
 
-    Alert.alert(
-      "Conta criada",
-      "Agora você pode entrar com seu e-mail e sua senha.",
-    );
+    if (onCadastroConcluido) {
+      onCadastroConcluido();
+    } else {
+      Alert.alert(
+        "Conta criada",
+        "Agora você pode entrar com seu e-mail e sua senha."
+      );
+    }
   }
 }
 
@@ -112,6 +130,7 @@ async function confirmar() {
         </View>
 
         <View style={styles.form}>
+          {cadastro && renderizarCadastro?.(enviando)}
           {!cadastro ? (
             <Text style={styles.formTitle}>Entre na sua conta</Text>
           ) : null}
