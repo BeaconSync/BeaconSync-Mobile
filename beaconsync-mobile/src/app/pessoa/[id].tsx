@@ -17,6 +17,7 @@ import EnderecosPessoaScreen from "../../screens/EnderecoPessoaScreen";
 import { colors } from "../../theme/colors";
 import type { VinculoPessoa } from "../../types/vinculoPessoa";
 import { criarEnvioSituacao } from "../../services/informarSituacao";
+import EnderecosPessoaConectados from "../../components/EnderecosPessoaConectados";
 import {
   criarSalvamentoPessoa,
 } from "../../services/editarPessoa";
@@ -316,17 +317,37 @@ if (editando && estado.status === "sucesso") {
   )
 )}
 
-      {vendoEnderecos && estado.status === "sucesso" && (
-        <EnderecosPessoaScreen
-          key={estado.pessoa.id}
-          pessoa={estado.pessoa}
-          demonstracao={demonstracao}
-          onFechar={() => setVendoEnderecos(false)}
-          onAtualizados={(enderecos) => {
-            setPessoaDemonstracao((atual) => ({ ...atual, enderecos }));
-          }}
-        />
-      )}
+{vendoEnderecos && estado.status === "sucesso" && (
+  demonstracao ? (
+    <EnderecosPessoaScreen
+      key={estado.pessoa.id}
+      pessoa={estado.pessoa}
+      demonstracao
+
+      onFechar={() =>
+        setVendoEnderecos(false)
+      }
+
+      onAtualizados={(enderecos) => {
+        setPessoaDemonstracao((atual) => ({
+          ...atual,
+          enderecos,
+        }));
+      }}
+    />
+  ) : (
+    <EnderecosPessoaConectados
+      key={estado.pessoa.id}
+      pessoaId={estado.pessoa.id}
+      nomePessoa={estado.pessoa.nome}
+
+      onFechar={() => {
+        setVendoEnderecos(false);
+        recarregar();
+      }}
+    />
+  )
+)}
     </>
   );
 }
