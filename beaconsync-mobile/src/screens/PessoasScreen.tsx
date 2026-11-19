@@ -9,10 +9,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import type { ReactElement } from "react";
 
 import CardPessoa from "../components/CardPessoa";
 import { useBuscaPessoas } from "../hooks/useBuscaPessoas";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type {
   EstadoPessoas,
   PessoaResumo,
@@ -23,6 +24,7 @@ type PessoasScreenProps = {
   onTentarNovamente?: () => void;
   onAbrirPessoa?: (pessoa: PessoaResumo) => void;
   onCadastrar: () => void;
+  rodape?: ReactElement;
 };
 
 
@@ -34,7 +36,11 @@ export default function PessoasScreen({
   onTentarNovamente,
   onAbrirPessoa,
   onCadastrar,
+  rodape,
 }: PessoasScreenProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const pessoas =
     estado.status === "sucesso"
       ? estado.pessoas
@@ -88,7 +94,7 @@ export default function PessoasScreen({
       pressed && styles.pressed,
     ]}
   >
-    <Plus size={24} color={colors.surface} />
+    <Plus size={24} color={colors.onPrimary} />
   </Pressable>
 </View>
 
@@ -131,6 +137,7 @@ export default function PessoasScreen({
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={Separador}
+          ListFooterComponent={rodape}
           renderItem={({ item }) => (
             <CardPessoa
               pessoa={item}
@@ -173,7 +180,7 @@ export default function PessoasScreen({
                   pressed && styles.pressed,
                   ]}
                 >
-                <Plus size={20} color={colors.surface} />
+                <Plus size={20} color={colors.onPrimary} />
 
                 <Text style={styles.textoCadastrarVazio}>
                  Cadastrar pessoa
@@ -219,10 +226,13 @@ export default function PessoasScreen({
 }
 
 function Separador() {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return <View style={styles.separator} />;
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -312,7 +322,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   buttonText: {
-    color: colors.surface,
+    color: colors.onPrimary,
     fontSize: 14,
     fontWeight: "600",
   },
@@ -364,6 +374,6 @@ textoCadastrarVazio: {
   fontSize: 15,
   fontWeight: "600",
   textAlign: "center",
-  color: colors.surface,
+  color: colors.onPrimary,
 },
-});
+}));

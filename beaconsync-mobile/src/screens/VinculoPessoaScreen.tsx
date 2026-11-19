@@ -13,7 +13,7 @@ import {
   SafeAreaView,
 } from "react-native-safe-area-context";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type {
   EstadoVinculosPessoa,
   VinculoPessoa,
@@ -48,6 +48,9 @@ function formatarData(valor: string | null) {
 }
 
 function CardVinculo({ vinculo }: { vinculo: VinculoPessoa }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const desde = formatarData(vinculo.desde);
 
   return (
@@ -92,6 +95,9 @@ export default function VinculosPessoaScreen({
   onFechar,
   onTentarNovamente,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const vinculos =
     estado.status === "sucesso" ? estado.vinculos : [];
 
@@ -230,7 +236,7 @@ export default function VinculosPessoaScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -378,9 +384,9 @@ const styles = StyleSheet.create({
   retryText: {
     fontSize: 14,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   pressed: {
     opacity: 0.7,
   },
-});
+}));

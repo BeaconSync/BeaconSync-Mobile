@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 type OpcaoTeste = {
   id: string;
@@ -22,6 +22,9 @@ type Props = {
 };
 
 export default function MenuTestes({ opcoes }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const [aberto, setAberto] = useState(false);
 
   if (!__DEV__) return null;
@@ -80,7 +83,7 @@ export default function MenuTestes({ opcoes }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flexShrink: 0,
     backgroundColor: colors.background,
@@ -126,4 +129,4 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7,
   },
-});
+}));

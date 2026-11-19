@@ -22,7 +22,7 @@ import {
   SafeAreaView,
 } from "react-native-safe-area-context";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type {
   Alerta,
   EstadoAlertas,
@@ -76,6 +76,9 @@ export default function AlertasScreen({
   onTentarNovamente,
   onAbrirPessoa,
 }: AlertasScreenProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const [filtro, setFiltro] = useState<FiltroAlertas>("ativos");
   const [alertaSelecionadoId, setAlertaSelecionadoId] =
     useState<string | null>(null);
@@ -474,6 +477,9 @@ function StatusAlerta({
 }: {
   status: Alerta["status"];
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const ativo = status === "ativo";
 
   return (
@@ -506,6 +512,9 @@ function Informacao({
   titulo: string;
   valor: string;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.information}>
       <Text style={styles.informationLabel}>{titulo}</Text>
@@ -515,10 +524,13 @@ function Informacao({
 }
 
 function Separador() {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return <View style={styles.separator} />;
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -698,7 +710,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   pressed: {
     opacity: 0.7,
@@ -794,4 +806,4 @@ closeButton: {
     lineHeight: 24,
     color: colors.text,
   },
-});
+}));

@@ -2,18 +2,19 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-import MenuTestes from "../../components/MenuTestes";
 import SolicitacoesRecebidasConectadas from "../../components/SolicitacoesRecebidasConectadas";
 
 import { useAlertas } from "../../hooks/useAlertas";
 import { useMeuPerfil } from "../../hooks/useMeuPerfil";
 import { usePessoasAcompanhadas } from "../../hooks/usePessoasAcompanhadas";
 
+import MinhasSolicitacoesConectadas
+  from "../../components/MinhasSolicitacoesConectadas";
 import InicioScreen from "../../screens/InicioScreen";
 import MinhasSolicitacoesScreen from "../../screens/MinhasSolicitacoesScreen";
 import SolicitacoesRecebidasScreen from "../../screens/SolicitacoesRecebidasScreen";
 
-import { colors } from "../../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../../theme/tema";
 
 import type { EstadoAlertas } from "../../types/alerta";
 
@@ -72,6 +73,9 @@ function filtrarAlertasAcompanhados(
 }
 
 export default function Inicio() {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const router = useRouter();
 
   const [cenario, setCenario] =
@@ -195,6 +199,11 @@ export default function Inicio() {
               ? estadoPerfil.perfil.nome
               : undefined
         }
+        fotoUsuario={
+  !demonstracao && estadoPerfil.status === "sucesso"
+    ? estadoPerfil.perfil.fotoUrl
+    : null
+}
         estadoPessoas={estadoPessoas}
         estadoAlertas={estadoAlertas}
         demonstracao={demonstracao}
@@ -215,44 +224,22 @@ export default function Inicio() {
         }
       />
 
-      {__DEV__ && (
-        <MenuTestes
-          opcoes={[
-            {
-              id: "inicio-carregando",
-              titulo: "Início carregando",
-              onPress: () =>
-                selecionarCenario("carregando"),
-            },
-            {
-              id: "inicio-vazio",
-              titulo: "Início sem pessoas e sem alertas",
-              onPress: () =>
-                selecionarCenario("vazio"),
-            },
-            {
-              id: "inicio-erro",
-              titulo: "Início com erro de consulta",
-              onPress: () =>
-                selecionarCenario("erro"),
-            },
-            {
-              id: "inicio-normal",
-              titulo: "Fechar prévia do início",
-              onPress: () =>
-                selecionarCenario("normal"),
-            },
-          ]}
-        />
-      )}
-
       {painelAberto === "enviadas" && (
-        <MinhasSolicitacoesScreen
-          estado={{ status: "indisponivel" }}
-          demonstracao={demonstracao}
-          onFechar={() => setPainelAberto(null)}
-        />
-      )}
+  demonstracao ? (
+    <MinhasSolicitacoesScreen
+      estado={{ status: "indisponivel" }}
+      demonstracao
+      onFechar={() => setPainelAberto(null)}
+    />
+  ) : (
+    <MinhasSolicitacoesConectadas
+      onFechar={() => {
+        setPainelAberto(null);
+        atualizar();
+      }}
+    />
+  )
+)}
 
       {painelAberto === "recebidas" &&
         (
@@ -273,9 +260,9 @@ export default function Inicio() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
-});
+}));

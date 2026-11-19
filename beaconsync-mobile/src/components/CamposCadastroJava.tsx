@@ -12,7 +12,7 @@ import {
   consultarDistritos,
   type Distrito,
 } from "../services/distritos";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type {
   DadosCadastroPessoa,
   ErrosCadastroPessoa,
@@ -66,6 +66,9 @@ export default function CamposCadastroJava({
   desabilitado = false,
   onAlterar,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const [distritos, setDistritos] = useState<Distrito[]>([]);
   const [carregando, setCarregando] = useState(false);
   const [erroConsulta, setErroConsulta] =
@@ -313,7 +316,7 @@ export default function CamposCadastroJava({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   group: {
     gap: 10,
     marginBottom: 22,
@@ -360,4 +363,4 @@ const styles = StyleSheet.create({
   dimmed: {
     opacity: 0.6,
   },
-});
+}));

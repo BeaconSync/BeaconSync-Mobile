@@ -36,7 +36,7 @@ import {
 } from "../hooks/useNovoCadastroPessoa";
 
 import { useSessao } from "../hooks/useSessao";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 const titulos = [
   "Informações básicas",
@@ -53,6 +53,9 @@ function mascaraData(valor: string) {
 }
 
 export default function NovoCadastroPessoaScreen() {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const router = useRouter();
 
    const [
@@ -482,7 +485,7 @@ export default function NovoCadastroPessoaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -525,7 +528,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   secondary: {
     backgroundColor: colors.surface,
@@ -544,4 +547,4 @@ const styles = StyleSheet.create({
   dimmed: {
     opacity: 0.6,
   },
-});
+}));

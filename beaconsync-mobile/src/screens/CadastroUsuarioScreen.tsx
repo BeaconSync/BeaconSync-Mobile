@@ -10,18 +10,55 @@ import {
   View,
 } from "react-native";
 
+import CampoFormulario from "../components/CampoFormulario";
+
+import {
+  especialidadesVoluntario,
+  type DadosCadastroVoluntario,
+} from "../types/voluntario";
+
+import {
+  cadastrarVoluntariadoNovaConta,
+  validarVoluntariadoNovaConta,
+} from "../services/voluntariadoNovaConta";
+
 import TelaAcesso from "../components/TelaAcesso";
 import type { AcoesAcesso } from "../hooks/useAcessoForm";
 
 import { prepararFotoPerfil } from "../services/fotoPerfil";
 import { enviarFotoNovaConta } from "../services/fotoNovaConta";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 export default function CadastroUsuarioScreen({
   onCadastro,
 }: Pick<AcoesAcesso, "onCadastro">) {
+  const { colors } = useTema();
+
   const [fotoUri, setFotoUri] =
     useState<string | null>(null);
+
+    const [voluntariado, setVoluntariado] =
+  useState<DadosCadastroVoluntario>({
+    telefone: "",
+    cidade: "",
+    uf: "",
+    especialidade: "",
+    outraEspecialidade: "",
+    disponivel: false,
+    observacoes: "",
+  });
+
+function alterarVoluntariado<
+  K extends keyof DadosCadastroVoluntario,
+>(
+  campo: K,
+  valor: DadosCadastroVoluntario[K],
+) {
+  setVoluntariado((atual) => ({
+    ...atual,
+    [campo]: valor,
+  }));
+}
 
   const [escolhendo, setEscolhendo] = useState(false);
 
@@ -68,42 +105,229 @@ export default function CadastroUsuarioScreen({
     <TelaAcesso
       modo="cadastro"
       bloqueado={escolhendo}
-      onCadastro={
-        onCadastro
-          ? async (dados) => {
-              // Valida e prepara a imagem antes de criar a conta.
-              const formulario = fotoUri
-                ? await prepararFotoPerfil(fotoUri)
-                : null;
+     onCadastro={
+  onCadastro
+    ? async (dados) => {
+        // Valida antes de criar a conta no Java.
+        if (dados.papel === "VOLUNTARIO") {
+          validarVoluntariadoNovaConta(
+            dados,
+            voluntariado,
+          );
+        }
 
-              await onCadastro(dados);
+        const formulario = fotoUri
+          ? await prepararFotoPerfil(fotoUri)
+          : null;
 
-              const aviso = formulario
-                ? await enviarFotoNovaConta(
-                    {
-                      email: dados.email,
-                      senha: dados.senha,
-                    },
-                    formulario
-                  )
-                : null;
+        await onCadastro(dados);
 
-              avisoFinal.current =
-                aviso ??
-                (
-                  formulario
-                    ? "Sua conta e sua foto foram salvas. Agora entre com seu e-mail e sua senha."
-                    : "Agora você pode entrar com seu e-mail e sua senha."
-                );
-            }
-          : undefined
+        // A partir daqui, a conta Java já existe.
+        // Falhas complementares viram avisos, evitando
+        // pedir que o usuário crie a mesma conta novamente.
+        const avisos: string[] = [];
+
+        if (dados.papel === "VOLUNTARIO") {
+          const aviso =
+            await cadastrarVoluntariadoNovaConta(
+              dados,
+              voluntariado,
+            );
+
+          if (aviso) avisos.push(aviso);
+        }
+
+        if (formulario) {
+          const aviso = await enviarFotoNovaConta(
+            {
+              email: dados.email,
+              senha: dados.senha,
+            },
+            formulario,
+          );
+
+          if (aviso) avisos.push(aviso);
+        }
+
+        avisoFinal.current =
+          avisos.length > 0
+            ? avisos.join("\n\n")
+            : dados.papel === "VOLUNTARIO"
+              ? "Sua conta e seu cadastro de voluntariado foram salvos. Agora entre com seu e-mail e sua senha."
+              : "Sua conta foi criada. Agora entre com seu e-mail e sua senha.";
       }
+    : undefined
+}
       onCadastroConcluido={() => {
         Alert.alert(
           "Conta criada",
           avisoFinal.current
         );
       }}
+      renderizarVoluntariado={(enviando) => (
+  <View style={{ gap: 12, marginBottom: 24 }}>
+    <Text
+      style={{
+        fontSize: 20,
+        fontWeight: "600",
+        color: colors.text,
+      }}
+    >
+      Seu voluntariado
+    </Text>
+
+    <Text
+      style={{
+        fontSize: 14,
+        lineHeight: 21,
+        color: colors.textSecondary,
+      }}
+    >
+      Informe onde e como você pode ajudar.
+      Usaremos o telefone informado na sua conta.
+    </Text>
+
+    <CampoFormulario
+      label="Cidade de atuação"
+      value={voluntariado.cidade}
+      onChangeText={(valor) =>
+        alterarVoluntariado("cidade", valor)
+      }
+      placeholder="Ex.: São Paulo"
+      maxLength={100}
+      autoCapitalize="words"
+      editable={!enviando}
+    />
+
+    <CampoFormulario
+      label="Estado (UF)"
+      value={voluntariado.uf}
+      onChangeText={(valor) =>
+        alterarVoluntariado(
+          "uf",
+          valor.replace(/[^a-zA-Z]/g, "").toUpperCase(),
+        )
+      }
+      placeholder="Ex.: SP"
+      maxLength={2}
+      autoCapitalize="characters"
+      autoCorrect={false}
+      editable={!enviando}
+    />
+
+    <Text
+      style={{
+        fontSize: 15,
+        fontWeight: "600",
+        color: colors.text,
+      }}
+    >
+      Como você pode ajudar?
+    </Text>
+
+    {especialidadesVoluntario.map((especialidade) => {
+      const selecionada =
+        voluntariado.especialidade === especialidade;
+
+      return (
+        <Pressable
+          key={especialidade}
+          onPress={() =>
+            alterarVoluntariado(
+              "especialidade",
+              especialidade,
+            )
+          }
+          disabled={enviando}
+          accessibilityRole="radio"
+          accessibilityState={{
+            checked: selecionada,
+            disabled: enviando,
+          }}
+          style={({ pressed }) => ({
+            minHeight: 48,
+            padding: 14,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: selecionada
+              ? colors.primary
+              : colors.border,
+            backgroundColor: selecionada
+              ? colors.primaryLight
+              : colors.surface,
+            opacity: pressed || enviando ? 0.6 : 1,
+          })}
+        >
+          <Text style={{ color: colors.text }}>
+            {selecionada ? "● " : "○ "}
+            {especialidade}
+          </Text>
+        </Pressable>
+      );
+    })}
+
+    {voluntariado.especialidade === "Outro" && (
+      <CampoFormulario
+        label="Descreva como pode ajudar"
+        value={voluntariado.outraEspecialidade}
+        onChangeText={(valor) =>
+          alterarVoluntariado(
+            "outraEspecialidade",
+            valor,
+          )
+        }
+        placeholder="Informe sua área de atuação"
+        maxLength={200}
+        multiline
+        editable={!enviando}
+      />
+    )}
+
+    <CampoFormulario
+      label="Observações (opcional)"
+      value={voluntariado.observacoes}
+      onChangeText={(valor) =>
+        alterarVoluntariado("observacoes", valor)
+      }
+      placeholder="Ex.: disponibilidade aos finais de semana"
+      maxLength={1000}
+      multiline
+      editable={!enviando}
+    />
+
+    <Pressable
+      onPress={() =>
+        alterarVoluntariado(
+          "disponivel",
+          !voluntariado.disponivel,
+        )
+      }
+      disabled={enviando}
+      accessibilityRole="checkbox"
+      accessibilityState={{
+        checked: voluntariado.disponivel,
+        disabled: enviando,
+      }}
+      style={({ pressed }) => ({
+        minHeight: 48,
+        padding: 14,
+        borderRadius: 12,
+        backgroundColor: colors.primaryLight,
+        opacity: pressed || enviando ? 0.6 : 1,
+      })}
+    >
+      <Text
+        style={{
+          color: colors.text,
+          lineHeight: 22,
+        }}
+      >
+        {voluntariado.disponivel ? "☑ " : "☐ "}
+        Estou disponível para ajudar.
+      </Text>
+    </Pressable>
+  </View>
+)}
       renderizarCadastro={(enviando) => (
         <View
           style={{

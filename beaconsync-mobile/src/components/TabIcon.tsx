@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 type TabIconProps = {
   icon: LucideIcon;
@@ -14,6 +14,9 @@ export default function TabIcon({
   color,
   focused,
 }: TabIconProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View
       style={[
@@ -26,7 +29,7 @@ export default function TabIcon({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     width: 48,
     height: 30,
@@ -37,4 +40,4 @@ const styles = StyleSheet.create({
   selected: {
     backgroundColor: colors.primaryLight,
   },
-});
+}));

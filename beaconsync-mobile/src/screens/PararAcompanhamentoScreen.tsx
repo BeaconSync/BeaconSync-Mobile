@@ -18,7 +18,7 @@ import {
   type RemoverMeuVinculo,
 } from "../hooks/useRemoverMeuVinculo";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 type Props = {
   pessoaId: string;
@@ -37,6 +37,9 @@ export default function PararAcompanhamentoScreen({
   onConcluido,
   onRemover,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const { enviando, erro, remover } = useRemoverMeuVinculo(
     pessoaId,
     onRemover
@@ -122,6 +125,12 @@ export default function PararAcompanhamentoScreen({
             será removido.
           </Text>
 
+          <Text style={styles.description}>
+  É necessário manter pelo menos outra pessoa com vínculo
+  ativo. Se você for o último responsável, aprove outra
+  solicitação antes de sair.
+</Text>
+
           <View style={styles.card}>
             <Text style={styles.cardTitle}>
               O cadastro será mantido
@@ -196,7 +205,7 @@ export default function PararAcompanhamentoScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -255,12 +264,12 @@ const styles = StyleSheet.create({
   errorBox: {
     padding: 16,
     borderRadius: 14,
-    backgroundColor: "#FBEDEB",
+    backgroundColor: colors.dangerBackground,
   },
   errorText: {
     fontSize: 14,
     lineHeight: 22,
-    color: "#AD3028",
+    color: colors.danger,
   },
   button: {
     minHeight: 52,
@@ -284,7 +293,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   removeButton: {
-    backgroundColor: "#AD3028",
+    backgroundColor: colors.dangerButton,
   },
   removeText: {
     flexShrink: 1,
@@ -296,4 +305,4 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
-});
+}));

@@ -7,111 +7,33 @@ import {
   View,
 } from "react-native";
 
+import SolicitarVinculoConectado from "../../components/SolicitarVinculoConectado";
+import MinhasSolicitacoesConectadas from "../../components/MinhasSolicitacoesConectadas";
 import SolicitacoesRecebidasConectadas from "../../components/SolicitacoesRecebidasConectadas";
+
 import { usePessoasAcompanhadas } from "../../hooks/usePessoasAcompanhadas";
-import MenuTestes from "../../components/MenuTestes";
-import MinhasSolicitacoesScreen from "../../screens/MinhasSolicitacoesScreen";
 import PessoasScreen from "../../screens/PessoasScreen";
-import SolicitacoesRecebidasScreen from "../../screens/SolicitacoesRecebidasScreen";
-import SolicitarVinculoScreen from "../../screens/SolicitarVinculoScreen";
 
-import { colors } from "../../theme/colors";
+import {
+  useTema,
+  usarEstilosTema,
+  type Cores,
+} from "../../theme/tema";
 
-import type {
-  SolicitacaoVinculoEnviada,
-  SolicitacaoVinculoRecebida,
-} from "../../types/solicitacaoVinculo";
-
-const pedidosExemplo: SolicitacaoVinculoRecebida[] = [
-  {
-    id: "pedido-pendente-exemplo",
-    pessoaId: "demonstracao",
-    pessoaNome: "Pessoa de exemplo",
-    solicitanteNome: "Familiar de exemplo",
-    vinculo: "Familiar",
-    mensagem:
-      "Pedido fictício: gostaria de ajudar no acompanhamento.",
-    criadaEm: "2026-11-10T14:00:00-03:00",
-    status: "pendente",
-    podeDecidir: true,
-  },
-  {
-    id: "pedido-historico-exemplo",
-    pessoaId: "demonstracao",
-    pessoaNome: "Pessoa de exemplo",
-    solicitanteNome: "Solicitante de exemplo",
-    vinculo: "Outro",
-    mensagem:
-      "Registro fictício para visualizar o histórico.",
-    criadaEm: "2026-11-09T10:00:00-03:00",
-    status: "recusada",
-    podeDecidir: false,
-  },
-];
-
-const minhasSolicitacoesExemplo: SolicitacaoVinculoEnviada[] = [
-  {
-    id: "EXEMPLO-001",
-    vinculo: "Familiar",
-    mensagem:
-      "Pedido fictício: gostaria de ajudar no acompanhamento de um familiar.",
-    criadaEm: "2026-11-10T10:00:00-03:00",
-    decididaEm: null,
-    status: "pendente",
-  },
-  {
-    id: "EXEMPLO-002",
-    vinculo: "Cuidador",
-    mensagem:
-      "Pedido fictício: presto apoio nos cuidados diários.",
-    criadaEm: "2026-11-09T09:00:00-03:00",
-    decididaEm: "2026-11-09T14:00:00-03:00",
-    status: "aprovada",
-  },
-  {
-    id: "EXEMPLO-003",
-    vinculo: "Amigo",
-    mensagem:
-      "Pedido fictício para visualizar uma solicitação recusada.",
-    criadaEm: "2026-11-08T11:00:00-03:00",
-    decididaEm: "2026-11-09T10:00:00-03:00",
-    status: "recusada",
-  },
-];
+type Painel =
+  | "solicitar-vinculo"
+  | "minhas-solicitacoes"
+  | "solicitacoes-recebidas"
+  | null;
 
 export default function PessoasRoute() {
-
-  const [
-  vendoSolicitacoesReais,
-  setVendoSolicitacoesReais,
-] = useState(false);
-
   const router = useRouter();
+
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const { estado, recarregar } = usePessoasAcompanhadas();
-
-  const [solicitandoVinculo, setSolicitandoVinculo] =
-    useState(false);
-
-  const [vendoSolicitacoes, setVendoSolicitacoes] =
-    useState(false);
-
-  const [
-    vendoMinhasSolicitacoes,
-    setVendoMinhasSolicitacoes,
-  ] = useState(false);
-
-  const [pedidosRecebidos, setPedidosRecebidos] =
-    useState<SolicitacaoVinculoRecebida[]>(pedidosExemplo);
-
-  function atualizarSolicitacao(
-    atualizada: SolicitacaoVinculoRecebida
-  ) {
-    setPedidosRecebidos((atuais) =>
-      atuais.map((item) =>
-        item.id === atualizada.id ? atualizada : item
-      )
-    );
-  }
+  const [painel, setPainel] = useState<Painel>(null);
 
   function abrirPessoa(id: string) {
     router.push({
@@ -120,118 +42,159 @@ export default function PessoasRoute() {
     });
   }
 
+  function fecharSolicitacoes() {
+    setPainel(null);
+    void recarregar();
+  }
+
   return (
     <View style={styles.container}>
       <PessoasScreen
-          estado={estado}
-          onTentarNovamente={recarregar}
-          onCadastrar={() => router.push("/cadastrar-pessoa")}
-          onAbrirPessoa={(pessoa) => abrirPessoa(pessoa.id)}
-        />
+        estado={estado}
+        onTentarNovamente={() => {
+          void recarregar();
+        }}
+        onCadastrar={() => {
+          router.push("/cadastrar-pessoa");
+        }}
+        onAbrirPessoa={(pessoa) => {
+          abrirPessoa(pessoa.id);
+        }}
+        rodape={
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              Solicitações de vínculo
+            </Text>
 
-        {estado.status === "sucesso" && (
-  <Pressable
-    onPress={() => setVendoSolicitacoesReais(true)}
-    accessibilityRole="button"
-    style={({ pressed }) => [
-      styles.solicitacoesButton,
-      pressed && styles.pressed,
-    ]}
-  >
-    <Text style={styles.solicitacoesText}>
-      Solicitações recebidas
-    </Text>
-  </Pressable>
-)}
+            <View style={styles.card}>
+              <Text style={styles.description}>
+                Solicite acesso para acompanhar uma pessoa,
+                acompanhe seus pedidos e consulte as
+                solicitações que você pode analisar.
+              </Text>
 
-{vendoSolicitacoesReais && (
-  <SolicitacoesRecebidasConectadas
-    onFechar={() => setVendoSolicitacoesReais(false)}
-  />
-)}
+              <Pressable
+                onPress={() => {
+                  setPainel("solicitar-vinculo");
+                }}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.button,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.buttonText}>
+                  Solicitar vínculo
+                </Text>
+              </Pressable>
 
-      {__DEV__ && (
-        <MenuTestes
-          opcoes={[
-            {
-              id: "pessoa",
-              titulo: "Pessoa de exemplo",
-              onPress: () => abrirPessoa("demonstracao"),
-            },
-            {
-              id: "solicitar-vinculo",
-              titulo: "Solicitar vínculo",
-              onPress: () => setSolicitandoVinculo(true),
-            },
-            {
-              id: "solicitacoes-recebidas",
-              titulo: "Solicitações recebidas",
-              onPress: () => setVendoSolicitacoes(true),
-            },
-            {
-              id: "minhas-solicitacoes",
-              titulo: "Minhas solicitações",
-              onPress: () => setVendoMinhasSolicitacoes(true),
-            },
-          ]}
+              <Pressable
+                onPress={() => {
+                  setPainel("minhas-solicitacoes");
+                }}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.button,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.buttonText}>
+                  Minhas solicitações
+                </Text>
+              </Pressable>
+
+              {estado.status === "sucesso" && (
+                <Pressable
+                  onPress={() => {
+                    setPainel("solicitacoes-recebidas");
+                  }}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [
+                    styles.button,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.buttonText}>
+                    Solicitações recebidas
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
+        }
+      />
+
+      {painel === "solicitar-vinculo" && (
+        <SolicitarVinculoConectado
+          onFechar={() => setPainel(null)}
+          onConcluido={() => setPainel(null)}
         />
       )}
 
-      {__DEV__ && solicitandoVinculo && (
-        <SolicitarVinculoScreen
-          referenciaCadastro="cadastro-demonstracao"
-          demonstracao
-          onFechar={() => setSolicitandoVinculo(false)}
+      {painel === "minhas-solicitacoes" && (
+        <MinhasSolicitacoesConectadas
+          onFechar={fecharSolicitacoes}
         />
       )}
 
-      {__DEV__ && vendoSolicitacoes && (
-        <SolicitacoesRecebidasScreen
-          estado={{
-            status: "sucesso",
-            solicitacoes: pedidosRecebidos,
-          }}
-          demonstracao
-          onFechar={() => setVendoSolicitacoes(false)}
-          onAtualizada={atualizarSolicitacao}
-        />
-      )}
-
-      {__DEV__ && vendoMinhasSolicitacoes && (
-        <MinhasSolicitacoesScreen
-          estado={{
-            status: "sucesso",
-            solicitacoes: minhasSolicitacoesExemplo,
-          }}
-          demonstracao
-          onFechar={() => setVendoMinhasSolicitacoes(false)}
+      {painel === "solicitacoes-recebidas" && (
+        <SolicitacoesRecebidasConectadas
+          onFechar={fecharSolicitacoes}
         />
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  solicitacoesButton: {
-  minHeight: 48,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingHorizontal: 20,
-  paddingVertical: 12,
-  borderTopWidth: 1,
-  borderTopColor: colors.border,
-},
-solicitacoesText: {
-  fontSize: 14,
-  fontWeight: "600",
-  textAlign: "center",
-  color: colors.primary,
-},
-pressed: {
-  opacity: 0.7,
-},
-});
+const criarStyles = (colors: Cores) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    section: {
+      marginTop: 28,
+      gap: 14,
+    },
+    sectionTitle: {
+      fontSize: 20,
+      lineHeight: 28,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    card: {
+      padding: 20,
+      gap: 14,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    description: {
+      fontSize: 14,
+      lineHeight: 23,
+      color: colors.textSecondary,
+      marginBottom: 2,
+    },
+    button: {
+      minHeight: 52,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    buttonText: {
+      fontSize: 15,
+      lineHeight: 22,
+      fontWeight: "600",
+      textAlign: "center",
+      color: colors.primary,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
+  });

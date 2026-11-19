@@ -16,7 +16,7 @@ import {
   useExcluirPessoa,
   type EnviarExclusaoPessoa,
 } from "../hooks/useExcluirPessoa";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 type Props = {
   pessoaId: string;
@@ -35,6 +35,9 @@ export default function ExcluirPessoaScreen({
   onExcluido,
   onExcluir,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
     const { enviando, erro, excluir } = useExcluirPessoa(
       pessoaId,
       demonstracao ? undefined : onExcluir
@@ -112,7 +115,7 @@ export default function ExcluirPessoaScreen({
           )}
 
           <View style={styles.iconCircle}>
-            <Trash2 size={32} color="#AD3028" />
+            <Trash2 size={32} color={colors.danger} />
           </View>
 
           <Text style={styles.title}>
@@ -126,7 +129,7 @@ export default function ExcluirPessoaScreen({
           </Text>
 
           <View style={styles.warningBox}>
-            <AlertTriangle size={21} color="#AD3028" />
+            <AlertTriangle size={21} color={colors.danger} />
 
             <Text style={styles.warningText}>
               Esta ação não pode ser desfeita. Ela exclui o
@@ -195,7 +198,7 @@ export default function ExcluirPessoaScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -234,7 +237,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FBEDEB",
+    backgroundColor: colors.dangerBackground,
     marginTop: 24,
     marginBottom: 8,
   },
@@ -254,13 +257,13 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: "#FBEDEB",
+    backgroundColor: colors.dangerBackground,
   },
   warningText: {
     flexShrink: 1,
     fontSize: 14,
     lineHeight: 21,
-    color: "#AD3028",
+    color: colors.danger,
   },
   helper: {
     fontSize: 13,
@@ -270,7 +273,7 @@ const styles = StyleSheet.create({
   errorBox: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: "#FBEDEB",
+    backgroundColor: colors.dangerBackground,
   },
   actions: {
     gap: 12,
@@ -296,7 +299,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   deleteButton: {
-    backgroundColor: "#AD3028",
+    backgroundColor: colors.dangerButton,
   },
   deleteText: {
     flexShrink: 1,
@@ -308,4 +311,4 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
-});
+}));

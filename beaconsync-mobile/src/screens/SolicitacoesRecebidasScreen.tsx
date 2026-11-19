@@ -17,7 +17,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { useResponderVinculo } from "../hooks/useResponderVinculo";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 import type {
   DecisaoVinculo,
@@ -71,6 +71,9 @@ export default function SolicitacoesRecebidasScreen({
   onResponder,
   onTentarNovamente,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const [filtro, setFiltro] =
     useState<"pendentes" | "todas">("pendentes");
 
@@ -403,7 +406,7 @@ export default function SolicitacoesRecebidasScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -535,21 +538,21 @@ const styles = StyleSheet.create({
   approveText: {
     fontSize: 15,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   rejectButton: {
     minHeight: 48,
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#AD3028",
+    borderColor: colors.danger,
     alignItems: "center",
     justifyContent: "center",
   },
   rejectText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#AD3028",
+    color: colors.danger,
   },
   processing: {
     flexDirection: "row",
@@ -559,12 +562,12 @@ const styles = StyleSheet.create({
   errorBox: {
     padding: 14,
     borderRadius: 12,
-    backgroundColor: "#FBEDEB",
+    backgroundColor: colors.dangerBackground,
   },
   errorText: {
     fontSize: 14,
     lineHeight: 21,
-    color: "#AD3028",
+    color: colors.danger,
   },
   separator: {
     height: 16,
@@ -572,4 +575,4 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
-});
+}));

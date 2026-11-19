@@ -39,7 +39,7 @@ import {
   usePessoaForm,
   vinculos,
 } from "../hooks/usePessoaForm";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type {
   DadosCadastroPessoa,
   EnviarCadastroPessoa,
@@ -113,6 +113,9 @@ export default function CadastroPessoaScreen({
   edicao,
   integracaoJava = false,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const router = useRouter();
   const cadastroJava = integracaoJava && !edicao;
 
@@ -357,7 +360,7 @@ function voltarEtapa() {
  {concluido ? (
   <View style={styles.success}>
     <View style={styles.successIcon}>
-      <Check size={30} color="#31715A" />
+      <Check size={30} color={colors.success} />
     </View>
 
     <Text style={styles.successTitle}>
@@ -385,7 +388,7 @@ function voltarEtapa() {
         </Text>
       </View>
 
-      <Check size={20} color="#31715A" />
+      <Check size={20} color={colors.success} />
     </View>
 
     <Aviso texto="O cadastro não confirma segurança nem aciona um resgate. Durante um alerta, mantenha a situação da pessoa atualizada." />
@@ -959,6 +962,9 @@ function Avatar({
   nome: string;
   uri?: string | null;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const iniciais = obterIniciais(nome);
 
   return (
@@ -981,6 +987,9 @@ function Aviso({
   texto: string;
   erro?: boolean;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={[styles.notice, erro && styles.errorNotice]}>
       <Info
@@ -1007,6 +1016,9 @@ function Detalhe({
   titulo: string;
   valor: string;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.detail}>
       <Text style={styles.label}>{titulo}</Text>
@@ -1038,6 +1050,9 @@ function Escolhas({
   duasColunas = false,
   desabilitado = false,
 }: EscolhasProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.group}>
       {titulo && <Text style={styles.label}>{titulo}</Text>}
@@ -1072,7 +1087,7 @@ function Escolhas({
               >
                 {selecionado &&
                   (multiplo ? (
-                    <Check size={14} color={colors.surface} />
+                    <Check size={14} color={colors.onPrimary} />
                   ) : (
                     <View style={styles.radioDot} />
                   ))}
@@ -1108,6 +1123,9 @@ function Botao({
   carregando = false,
   seta = false,
 }: BotaoProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <Pressable
       onPress={onPress}
@@ -1128,7 +1146,7 @@ function Botao({
           color={secundario ? colors.primary : colors.surface}
         />
       ) : seta ? (
-        <ArrowRight size={18} color={colors.surface} />
+        <ArrowRight size={18} color={colors.onPrimary} />
       ) : null}
 
       <Text
@@ -1143,7 +1161,7 @@ function Botao({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -1197,13 +1215,13 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     lineHeight: 21,
-    color: "#62655E",
+    color: colors.textSecondary,
     marginBottom: 22,
   },
   helper: {
     fontSize: 13,
     lineHeight: 19,
-    color: "#62655E",
+    color: colors.textSecondary,
   },
   label: {
     fontSize: 14,
@@ -1329,7 +1347,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 20,
-    color: "#76581F",
+    color: colors.primary,
   },
   errorNotice: {
     backgroundColor: colors.warningBackground,
@@ -1377,7 +1395,7 @@ const styles = StyleSheet.create({
   presenceHelp: {
     fontSize: 13,
     lineHeight: 20,
-    color: "#62655E",
+    color: colors.textSecondary,
     marginTop: -10,
     marginBottom: 24,
   },
@@ -1420,7 +1438,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 15,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   secondaryText: {
     color: colors.text,
@@ -1439,7 +1457,7 @@ const styles = StyleSheet.create({
     borderRadius: 38,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EAF3ED",
+    backgroundColor: colors.successBackground,
     marginBottom: 10,
   },
   successTitle: {
@@ -1452,7 +1470,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     textAlign: "center",
-    color: "#62655E",
+    color: colors.textSecondary,
     marginBottom: 14,
   },
   personCard: {
@@ -1508,6 +1526,6 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 14,
     lineHeight: 22,
-    color: "#62655E",
+    color: colors.textSecondary,
   },
-});
+}));

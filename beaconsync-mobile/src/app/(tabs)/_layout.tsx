@@ -3,9 +3,11 @@ import { Bell, House, UserRound, Users } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import TabIcon from "../../components/TabIcon";
-import { colors } from "../../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../../theme/tema";
 
 export default function TabsLayout() {
+  const { colors } = useTema();
+
   const insets = useSafeAreaInsets();
 
   return (

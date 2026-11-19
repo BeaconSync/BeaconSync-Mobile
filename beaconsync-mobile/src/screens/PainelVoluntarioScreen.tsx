@@ -16,7 +16,7 @@ import {
 import type { TextInputProps } from "react-native";
 
 import MonitoramentoConectado from "../components/MonitoramentoConectado";
-
+import { useMeuPerfil } from "../hooks/useMeuPerfil";
 import {
   SafeAreaProvider,
   SafeAreaView,
@@ -26,7 +26,7 @@ import MapaMonitoramentoScreen from "./MapaMonitoramentoScreen";
 
 import { useDisponibilidadeVoluntario } from "../hooks/useDisponibilidadeVoluntario";
 import { useVoluntarioForm } from "../hooks/useVoluntarioForm";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 import type {
   EstadoMonitoramento,
@@ -84,6 +84,15 @@ export default function PainelVoluntarioScreen({
   estadoMapa,
   onAtualizarMapa,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
+  const { estado: perfilAtual } = useMeuPerfil();
+
+  const podeVerMapa =
+  perfilAtual.status === "sucesso" &&
+  perfilAtual.perfil.papel === "VOLUNTARIO";
+
   const [editando, setEditando] = useState(false);
   const [vendoMapa, setVendoMapa] = useState(false);
 
@@ -212,7 +221,7 @@ export default function PainelVoluntarioScreen({
             </Pressable>
           </View>
 
-          {vendoMapa ? (
+          {vendoMapa && podeVerMapa ? (
   demonstracao ? (
     <MapaMonitoramentoScreen
       demonstracao
@@ -448,7 +457,7 @@ export default function PainelVoluntarioScreen({
                     >
                       {formulario.enviando && (
                         <ActivityIndicator
-                          color={colors.surface}
+                          color={colors.onPrimary}
                         />
                       )}
 
@@ -567,20 +576,21 @@ export default function PainelVoluntarioScreen({
                       ) : null}
                     </View>
 
-                    <Pressable
-                      onPress={() => setVendoMapa(true)}
-                      disabled={bloqueado}
-                      accessibilityRole="button"
-                      style={({ pressed }) => [
-                        styles.button,
-                        (pressed || bloqueado) &&
-                          styles.disabled,
-                      ]}
-                    >
-                      <Text style={styles.buttonText}>
-                        Abrir mapa de apoio
-                      </Text>
-                    </Pressable>
+                    {podeVerMapa && (
+  <Pressable
+    onPress={() => setVendoMapa(true)}
+    disabled={bloqueado}
+    accessibilityRole="button"
+    style={({ pressed }) => [
+      styles.button,
+      (pressed || bloqueado) && styles.disabled,
+    ]}
+  >
+    <Text style={styles.buttonText}>
+      Abrir mapa de apoio
+    </Text>
+  </Pressable>
+)}
 
                     <Pressable
                       onPress={iniciarEdicao}
@@ -661,6 +671,9 @@ function Campo({
   style,
   ...props
 }: CampoProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.section}>
       <Text style={styles.label}>{rotulo}</Text>
@@ -682,6 +695,9 @@ function Informacao({
   rotulo: string;
   valor: string;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{rotulo}</Text>
@@ -691,6 +707,9 @@ function Informacao({
 }
 
 function MensagemErro({ texto }: { texto: string }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View
       style={styles.errorBox}
@@ -702,7 +721,7 @@ function MensagemErro({ texto }: { texto: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -861,12 +880,12 @@ const styles = StyleSheet.create({
   errorBox: {
     padding: 14,
     borderRadius: 12,
-    backgroundColor: "#FBEDEB",
+    backgroundColor: colors.dangerBackground,
   },
   errorText: {
     fontSize: 14,
     lineHeight: 21,
-    color: "#AD3028",
+    color: colors.danger,
   },
   updatedText: {
     fontSize: 12,
@@ -886,7 +905,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   editButton: {
     minHeight: 52,
@@ -905,4 +924,4 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
-});
+}));

@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useEnderecoPessoaForm } from "../hooks/useEnderecoPessoaForm";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type {
   EnderecoDetalhesPessoa,
   PessoaDetalhes,
@@ -125,6 +125,9 @@ export default function EnderecosPessoaScreen({
   onAtualizados,
   onSalvar,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const formulario = useEnderecoPessoaForm(pessoa.id, onSalvar);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const titulo = formulario.aberto
@@ -476,6 +479,9 @@ function Botao({
   desabilitado?: boolean;
   carregando?: boolean;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <Pressable
       onPress={onPress}
@@ -500,7 +506,7 @@ function Botao({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
   header: {
@@ -540,7 +546,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   multiline: { minHeight: 100, textAlignVertical: "top" },
-  invalidInput: { borderColor: "#AD3028" },
+  invalidInput: { borderColor: colors.danger },
   card: {
     padding: 18,
     gap: 14,
@@ -567,8 +573,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.infoBackground,
   },
   infoText: { fontSize: 13, lineHeight: 20, color: colors.infoText },
-  errorBox: { padding: 16, borderRadius: 14, backgroundColor: "#FBEDEB" },
-  errorText: { fontSize: 13, lineHeight: 20, color: "#AD3028" },
+  errorBox: { padding: 16, borderRadius: 14, backgroundColor: colors.dangerBackground },
+  errorText: { fontSize: 13, lineHeight: 20, color: colors.danger },
   button: {
     minHeight: 52,
     flexDirection: "row",
@@ -589,8 +595,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   linkText: { fontSize: 15, color: colors.primary },
   dimmed: { opacity: 0.6 },
-});
+}));

@@ -221,16 +221,6 @@ export async function entrar(dados: {
   }
 }
 
-export function entrarDemonstracao() {
-  if (!__DEV__ || tokens) return;
-
-  publicar({
-    pronto: true,
-    demonstracao: true,
-    erro: null,
-  });
-}
-
 export async function renovarTokenAposTrocaPerfil(): Promise<string> {
   const versao = versaoSessao();
   const pendente = renovacao;

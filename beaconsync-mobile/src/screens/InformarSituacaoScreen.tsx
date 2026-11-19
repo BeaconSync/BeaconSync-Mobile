@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useInformarSituacao } from "../hooks/useInformarsituacao";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type { PessoaDetalhes } from "../types/detalhaPessoa";
 import type {
   EnviarSituacao,
@@ -67,6 +67,9 @@ export default function InformarSituacaoScreen({
   contextoAlerta,
   onRegistrada,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
 
   const router = useRouter();
 
@@ -334,7 +337,7 @@ async function confirmar() {
   ]}
 >
   {enviando && (
-    <ActivityIndicator color={colors.surface} />
+    <ActivityIndicator color={colors.onPrimary} />
   )}
 
   <Text style={styles.buttonText}>
@@ -378,6 +381,9 @@ function Opcao({
   desabilitada,
   onPress,
 }: OpcaoProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <Pressable
       onPress={onPress}
@@ -415,7 +421,7 @@ function Opcao({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -536,12 +542,12 @@ const styles = StyleSheet.create({
   errorBox: {
     padding: 16,
     borderRadius: 14,
-    backgroundColor: "#FBEDEB",
+    backgroundColor: colors.dangerBackground,
   },
   errorText: {
     fontSize: 14,
     lineHeight: 21,
-    color: "#AD3028",
+    color: colors.danger,
   },
   button: {
     minHeight: 52,
@@ -556,7 +562,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   cancelButton: {
     minHeight: 48,
@@ -571,4 +577,4 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
-});
+}));

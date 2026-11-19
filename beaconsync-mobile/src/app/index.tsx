@@ -8,9 +8,7 @@ export default function Index() {
     demonstracao,
   } = useSessao();
 
-  const podeEntrar =
-    autenticado ||
-    (__DEV__ && demonstracao);
+const podeEntrar = autenticado;
 
   return (
     <Redirect

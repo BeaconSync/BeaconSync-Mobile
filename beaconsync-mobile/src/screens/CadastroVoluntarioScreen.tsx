@@ -19,7 +19,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { useVoluntarioForm } from "../hooks/useVoluntarioForm";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 import type { DadosPerfil } from "../types/perfil";
 
@@ -41,6 +41,9 @@ export default function CadastroVoluntarioScreen({
   onFechar,
   onCadastrar,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const {
     dados,
     enviando,
@@ -340,7 +343,7 @@ export default function CadastroVoluntarioScreen({
                   ]}
                 >
                   {enviando && (
-                    <ActivityIndicator color={colors.surface} />
+                    <ActivityIndicator color={colors.onPrimary} />
                   )}
 
                   <Text style={styles.primaryText}>
@@ -363,6 +366,9 @@ type CampoProps = TextInputProps & {
 };
 
 function Campo({ rotulo, style, ...props }: CampoProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.section}>
       <Text style={styles.label}>{rotulo}</Text>
@@ -377,7 +383,7 @@ function Campo({ rotulo, style, ...props }: CampoProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -529,12 +535,12 @@ const styles = StyleSheet.create({
   errorBox: {
     padding: 16,
     borderRadius: 14,
-    backgroundColor: "#FBEDEB",
+    backgroundColor: colors.dangerBackground,
   },
   errorText: {
     fontSize: 14,
     lineHeight: 21,
-    color: "#AD3028",
+    color: colors.danger,
   },
   primaryButton: {
     minHeight: 52,
@@ -551,9 +557,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   disabled: {
     opacity: 0.6,
   },
-});
+}));

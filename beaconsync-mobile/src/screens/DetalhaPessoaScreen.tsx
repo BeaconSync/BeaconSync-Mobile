@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type {
   EstadoDetalhesPessoa,
   PessoaDetalhes,
@@ -98,6 +98,9 @@ export default function DetalhesPessoaScreen({
   onVerVinculos,
   onGerenciarEnderecos,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   if (estado.status !== "sucesso") {
     let titulo = "Informações indisponíveis";
     let descricao = "Não foi possível consultar os dados desta pessoa.";
@@ -140,17 +143,17 @@ export default function DetalhesPessoaScreen({
   const situacao = pessoa.situacao;
   const corSituacao =
     situacao?.status === "Seguro"
-      ? "#31715A"
+      ? colors.success
       : situacao?.status === "Precisa de Ajuda"
-        ? "#A93226"
+        ? colors.danger
         : situacao?.status === "Sem Contato"
-          ? "#805D1C"
+          ? colors.warningText
           : colors.infoText;
   const fundoSituacao =
     situacao?.status === "Seguro"
-      ? "#EAF3ED"
+      ? colors.successBackground
       : situacao?.status === "Precisa de Ajuda"
-        ? "#FCEDEA"
+        ? colors.dangerBackground
         : situacao?.status === "Sem Contato"
           ? colors.primaryLight
           : colors.infoBackground;
@@ -239,6 +242,22 @@ export default function DetalhesPessoaScreen({
           <Informacao titulo="Nome" valor={pessoa.nome} />
           <Informacao titulo="Data de nascimento" valor={nascimento?.data} />
           <Informacao titulo="Seu vínculo" valor={pessoa.vinculo} />
+          {!demonstracao && (
+  <View style={{ gap: 8 }}>
+    <Text style={styles.helper}>
+      Código para solicitar vínculo
+    </Text>
+
+    <Text selectable style={styles.body}>
+      {pessoa.id}
+    </Text>
+
+    <Text style={styles.helper}>
+      Compartilhe este código com quem deseja acompanhar
+      esta pessoa. O acesso depende da aprovação do pedido.
+    </Text>
+  </View>
+)}
         </Secao>
         <Secao titulo="Necessidades de apoio">
           <Etiquetas
@@ -393,6 +412,9 @@ function AvatarPessoa({
   nome,
   fotoUrl,
 }: Pick<PessoaDetalhes, "nome" | "fotoUrl">) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const [fotoFalhou, setFotoFalhou] = useState(false);
   return (
     <View style={styles.avatar}>
@@ -410,6 +432,9 @@ function AvatarPessoa({
   );
 }
 function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.card}>
       <Text style={styles.sectionTitle}>{titulo}</Text>
@@ -424,6 +449,9 @@ function Informacao({
   titulo: string;
   valor?: string | null;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.information}>
       <Text style={styles.label}>{titulo}</Text>
@@ -432,6 +460,9 @@ function Informacao({
   );
 }
 function Etiquetas({ itens, vazio }: { itens: string[]; vazio: string }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   if (itens.length === 0) {
     return <Text style={styles.body}>{vazio}</Text>;
   }
@@ -446,6 +477,9 @@ function Etiquetas({ itens, vazio }: { itens: string[]; vazio: string }) {
   );
 }
 function Aviso({ texto }: { texto: string }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.notice}>
       <Info size={19} color={colors.infoText} />
@@ -462,6 +496,9 @@ function Botao({
   onPress: () => void;
   secundario?: boolean;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <Pressable
       onPress={onPress}
@@ -480,7 +517,7 @@ function Botao({
     </Pressable>
   );
 }
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -618,7 +655,7 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 14,
     lineHeight: 21,
-    color: "#76581F",
+    color: colors.primary,
   },
   addressHeader: {
     flexDirection: "row",
@@ -672,7 +709,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   secondaryButton: {
     borderWidth: 1,
@@ -715,7 +752,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   deleteEntryText: {
-    color: "#AD3028",
+    color: colors.danger,
     fontSize: 14,
     fontWeight: "600",
   },
@@ -731,7 +768,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   informarButtonText: {
-    color: colors.surface,
+    color: colors.onPrimary,
     fontSize: 15,
     fontWeight: "600",
   },
@@ -761,4 +798,4 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: "center",
   },
-});
+}));

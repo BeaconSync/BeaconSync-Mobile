@@ -9,9 +9,11 @@ import {
   Text,
   View,
 } from "react-native";
+import SobreApp from "../components/SobreApp";
 import { SafeAreaView } from "react-native-safe-area-context";
+import SeletorTema from "../components/SeletorTema";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type { EstadoPerfil } from "../types/perfil";
 
 type Props = {
@@ -33,6 +35,9 @@ export default function PerfilScreen({
   onVoluntariado,
   rotuloVoluntariado = "Quero ser voluntário",
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const perfil =
     estado.status === "sucesso" ? estado.perfil : null;
 
@@ -228,6 +233,16 @@ export default function PerfilScreen({
           </Text>
         </View>
 
+        <View style={styles.header}>
+  <Text style={styles.title}>Meu perfil</Text>
+
+  <Text style={styles.subtitle}>
+    Suas informações no BeaconSync.
+  </Text>
+</View>
+
+<SeletorTema />
+<SobreApp />
         <Pressable
           onPress={onVoltarLogin}
           accessibilityRole="button"
@@ -245,7 +260,7 @@ export default function PerfilScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -392,7 +407,7 @@ const styles = StyleSheet.create({
   retryText: {
     fontSize: 14,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   loginButton: {
     minHeight: 52,
@@ -427,4 +442,4 @@ editButtonText: {
   fontWeight: "600",
   color: colors.primary,
 },
-});
+}));

@@ -11,7 +11,7 @@ import {
 
 import MapaBairros from "../components/MapaBairros";
 import { mapaBairrosExemplo } from "../data/mapaBairrosExemplos";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 import type {
   EstadoMonitoramento,
@@ -39,6 +39,9 @@ export default function MapaMonitoramentoScreen({
   demonstracao = false,
   onAtualizar,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const [selecionadoId, setSelecionadoId] =
     useState<string | null>(null);
 
@@ -332,6 +335,9 @@ function Dado({
   rotulo: string;
   valor: string;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.field}>
       <Text style={styles.helper}>{rotulo}</Text>
@@ -340,7 +346,7 @@ function Dado({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   scroll: {
     flex: 1,
     backgroundColor: colors.background,
@@ -436,7 +442,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   secondaryButton: {
     minHeight: 48,
@@ -460,4 +466,4 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.6,
   },
-});
+}));

@@ -9,7 +9,7 @@ import {
   type TextInputProps,
 } from "react-native";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 type CampoFormularioProps = TextInputProps & {
   label: string;
@@ -23,6 +23,9 @@ export default function CampoFormulario({
   secureTextEntry,
   ...props
 }: CampoFormularioProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const [senhaVisivel, setSenhaVisivel] = useState(false);
 
   return (
@@ -77,7 +80,7 @@ export default function CampoFormulario({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     gap: 8,
     marginBottom: 20,
@@ -123,4 +126,4 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.warningText,
   },
-});
+}));

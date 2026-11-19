@@ -4,12 +4,15 @@ import {
   View,
 } from "react-native";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type { MapaBairrosProps } from "../types/monitoramento";
 
 export default function MapaBairros(
   _props: MapaBairrosProps
 ) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <View style={styles.card}>
       <Text style={styles.texto}>
@@ -21,7 +24,7 @@ export default function MapaBairros(
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   card: {
     padding: 20,
     borderRadius: 16,
@@ -32,4 +35,4 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: colors.infoText,
   },
-});
+}));

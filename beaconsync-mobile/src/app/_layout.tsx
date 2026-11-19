@@ -16,9 +16,11 @@ import {
 
 import { useSessao } from "../hooks/useSessao";
 import { iniciarSessao } from "../services/sessao";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 export default function RootLayout() {
+  const { colors, tema, pronto: temaPronto } = useTema();
+
   const {
     pronto,
     autenticado,
@@ -30,15 +32,13 @@ export default function RootLayout() {
     void iniciarSessao();
   }, []);
 
-  const podeEntrar =
-    autenticado ||
-    (__DEV__ && demonstracao);
+const podeEntrar = autenticado;
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
+      <StatusBar style={tema === "escuro" ? "light" : "dark"} />
 
-      {!pronto || erro ? (
+      {!temaPronto || !pronto || erro ? (
         <SafeAreaView
           style={{
             flex: 1,
@@ -93,14 +93,15 @@ export default function RootLayout() {
         </SafeAreaView>
       ) : (
         <Stack
-          screenOptions={{
-            headerShown: false,
+  screenOptions={{
+    headerShown: false,
+    headerBackButtonDisplayMode: "minimal",
 
-            contentStyle: {
-              backgroundColor: colors.background,
-            },
-          }}
-        >
+    contentStyle: {
+      backgroundColor: colors.background,
+    },
+  }}
+>
           <Stack.Screen name="index" />
 
           <Stack.Protected guard={!podeEntrar}>

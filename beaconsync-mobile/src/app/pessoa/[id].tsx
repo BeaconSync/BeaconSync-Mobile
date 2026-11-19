@@ -5,6 +5,9 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 
+import {
+  removerMeuVinculo,
+} from "../../services/removerMeuVinculo";
 import VinculosPessoaConectados from "../../components/VinculosPessoaConectados";
 import { useDetalhesPessoa } from "../../hooks/useDetalhesPessoa";
 import EditarPessoaScreen from "../../screens/EditarPessoaScreen";
@@ -14,7 +17,7 @@ import InformarSituacaoScreen from "../../screens/InformarSituacaoScreen";
 import PararAcompanhamentoScreen from "../../screens/PararAcompanhamentoScreen";
 import VinculosPessoaScreen from "../../screens/VinculoPessoaScreen";
 import EnderecosPessoaScreen from "../../screens/EnderecoPessoaScreen";
-import { colors } from "../../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../../theme/tema";
 import type { VinculoPessoa } from "../../types/vinculoPessoa";
 import { criarEnvioSituacao } from "../../services/informarSituacao";
 import EnderecosPessoaConectados from "../../components/EnderecosPessoaConectados";
@@ -98,6 +101,8 @@ const vinculosExemplo: VinculoPessoa[] = [
 ];
 
 export default function DetalhesPessoaRoute() {
+  const { colors } = useTema();
+
   const router = useRouter();
   const [editando, setEditando] = useState(false);
   const [exibindoExclusao, setExibindoExclusao] = useState(false);
@@ -134,17 +139,26 @@ const estado: EstadoDetalhesPessoa = demonstracao
     else router.replace("/pessoas");
   }
 
-  if (removendoVinculo && estado.status === "sucesso") {
-    return (
-      <PararAcompanhamentoScreen
-        pessoaId={estado.pessoa.id}
-        nomePessoa={estado.pessoa.nome}
-        demonstracao={demonstracao}
-        onCancelar={() => setRemovendoVinculo(false)}
-        onConcluido={() => router.replace("/pessoas")}
-      />
-    );
-  }
+if (removendoVinculo && estado.status === "sucesso") {
+  return (
+    <PararAcompanhamentoScreen
+      key={estado.pessoa.id}
+      pessoaId={estado.pessoa.id}
+      nomePessoa={estado.pessoa.nome}
+      demonstracao={demonstracao}
+      onCancelar={() => setRemovendoVinculo(false)}
+      onRemover={
+        demonstracao
+          ? undefined
+          : removerMeuVinculo
+      }
+      onConcluido={() => {
+        setRemovendoVinculo(false);
+        router.replace("/pessoas");
+      }}
+    />
+  );
+}
 
 if (informandoSituacao && estado.status === "sucesso") {
   const alertaSelecionadoId =
@@ -280,10 +294,10 @@ if (editando && estado.status === "sucesso") {
             : undefined
         }
         onPararAcompanhamento={
-          demonstracao && estado.status === "sucesso"
-            ? () => setRemovendoVinculo(true)
-            : undefined
-        }
+  estado.status === "sucesso"
+    ? () => setRemovendoVinculo(true)
+    : undefined
+}
         onVerVinculos={
   estado.status === "sucesso"
     ? () => setVendoVinculos(true)

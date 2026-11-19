@@ -6,6 +6,7 @@ const urls = {
 export type Servico = keyof typeof urls;
 
 export type OpcoesHttp = {
+  timeoutMs?: number;
   metodo?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   dados?: unknown;
   formulario?: () => FormData;
@@ -68,7 +69,6 @@ function obterMensagemErro(
 
   const mensagens: string[] = [];
 
-  // Java: { campos: [{ campo, mensagem }] }
   if (Array.isArray(corpo.campos)) {
     for (const item of corpo.campos) {
       if (objeto(item) && textoPreenchido(item.mensagem)) {
@@ -77,8 +77,6 @@ function obterMensagemErro(
     }
   }
 
-  // Também aceita erros de validação no formato:
-  // { errors: { campo: ["Mensagem"] } }
   if (objeto(corpo.errors)) {
     for (const valor of Object.values(corpo.errors)) {
       if (Array.isArray(valor)) {
@@ -213,10 +211,15 @@ export async function http<T>(
   const url = `${urlApi(servico)}${caminho}`;
   const controller = new AbortController();
 
-  const limite = setTimeout(
-    () => controller.abort(),
-    20000
-  );
+const tempoLimite = Math.min(
+  120000,
+  Math.max(1000, opcoes.timeoutMs ?? 20000),
+);
+
+const limite = setTimeout(
+  () => controller.abort(),
+  tempoLimite,
+);
 
   try {
     const resposta = await fetch(url, {

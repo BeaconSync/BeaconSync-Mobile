@@ -15,7 +15,7 @@ import {
   SafeAreaView,
 } from "react-native-safe-area-context";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 import type {
   EstadoSolicitacoesEnviadas,
@@ -44,7 +44,7 @@ const filtros: { valor: Filtro; titulo: string }[] = [
   { valor: "recusada", titulo: "Recusados" },
 ];
 
-const apresentacaoStatus = {
+const criarApresentacaoStatus = (colors: Cores) => ({
   pendente: {
     titulo: "Aguardando aprovação",
     descricao:
@@ -56,17 +56,17 @@ const apresentacaoStatus = {
     titulo: "Solicitação aprovada",
     descricao:
       "Seu pedido foi aprovado. Consulte Pessoas para visualizar os cadastros disponíveis para sua conta.",
-    cor: "#296546",
-    fundo: "#EAF4EE",
+    cor: colors.success,
+    fundo: colors.successBackground,
   },
   recusada: {
     titulo: "Solicitação recusada",
     descricao:
       "Seu pedido foi recusado. Esta solicitação não concedeu acesso ao cadastro.",
-    cor: "#AD3028",
-    fundo: "#FBEDEB",
+    cor: colors.danger,
+    fundo: colors.dangerBackground,
   },
-};
+});
 
 function formatarData(valor: string | null) {
   if (!valor) return "Data não informada";
@@ -92,6 +92,10 @@ export default function MinhasSolicitacoesScreen({
   onFechar,
   onTentarNovamente,
 }: Props) {
+  const { colors } = useTema();
+  const apresentacaoStatus = usarEstilosTema(criarApresentacaoStatus, colors);
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const [filtro, setFiltro] = useState<Filtro>("todos");
 
   const solicitacoes =
@@ -156,6 +160,9 @@ export default function MinhasSolicitacoesScreen({
             style={styles.list}
             contentContainerStyle={styles.content}
             data={filtradas}
+            refreshing={
+            !demonstracao && estado.status === "carregando"}
+            onRefresh={demonstracao ? undefined : onTentarNovamente}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             ItemSeparatorComponent={() => (
@@ -164,8 +171,8 @@ export default function MinhasSolicitacoesScreen({
             ListHeaderComponent={
               <View style={styles.listHeader}>
                 <Text style={styles.description}>
-                  Acompanhe os pedidos de vínculo que você
-                  enviou para acompanhar outras pessoas.
+                  Acompanhe o pedido mais recente de cada vínculo solicitado.
+                  Arraste a lista para baixo para atualizar.
                 </Text>
 
                 {demonstracao && (
@@ -337,7 +344,7 @@ export default function MinhasSolicitacoesScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -480,7 +487,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   separator: {
     height: 16,
@@ -488,4 +495,4 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7,
   },
-});
+}));

@@ -54,7 +54,7 @@ export type ResponderSolicitacaoVinculo = (
 
 export type SolicitacaoVinculoEnviada = {
   id: string;
-  vinculo: TipoVinculoSolicitado;
+  vinculo: string;
   mensagem: string;
   criadaEm: string | null;
   decididaEm: string | null;

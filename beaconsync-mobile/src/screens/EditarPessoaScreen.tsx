@@ -31,7 +31,7 @@ import {
   categoriasVulnerabilidade,
 } from "../utils/validarCadatroJava";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 import type {
   PessoaDetalhes,
@@ -56,6 +56,9 @@ export default function EditarPessoaScreen({
   onConcluido,
   onSalvar,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const {
     dados,
     erros,
@@ -287,7 +290,7 @@ export default function EditarPessoaScreen({
         >
           {enviando && (
             <ActivityIndicator
-              color={colors.surface}
+              color={colors.onPrimary}
             />
           )}
 
@@ -313,7 +316,7 @@ export default function EditarPessoaScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -390,7 +393,7 @@ const styles = StyleSheet.create({
   saveText: {
     fontSize: 15,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   cancelButton: {
     minHeight: 48,
@@ -410,4 +413,4 @@ const styles = StyleSheet.create({
   dimmed: {
     opacity: 0.6,
   },
-});
+}));

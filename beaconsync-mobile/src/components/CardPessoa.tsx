@@ -1,7 +1,7 @@
 import { ChevronRight, MapPin } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type { PessoaResumo } from "../types/pessoa";
 
 type CardPessoaProps = {
@@ -13,6 +13,9 @@ export default function CardPessoa({
   pessoa,
   onPress,
 }: CardPessoaProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const iniciais = pessoa.nome
     .trim()
     .split(/\s+/)
@@ -70,7 +73,7 @@ export default function CardPessoa({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
@@ -122,4 +125,4 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.textSecondary,
   },
-});
+}));

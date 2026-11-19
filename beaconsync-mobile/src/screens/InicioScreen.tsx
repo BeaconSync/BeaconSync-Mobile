@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -7,15 +8,17 @@ import {
   Text,
   View,
 } from "react-native";
+import { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import CardPessoa from "../components/CardPessoa";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type { EstadoAlertas } from "../types/alerta";
 import type { EstadoPessoas, PessoaResumo } from "../types/pessoa";
 
 type InicioScreenProps = {
   nomeUsuario?: string;
+  fotoUsuario?: string | null;
   estadoPessoas?: EstadoPessoas;
   estadoAlertas?: EstadoAlertas;
   demonstracao?: boolean;
@@ -41,6 +44,9 @@ function Botao({
   onPress,
   secundario = false,
 }: BotaoProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <Pressable
       onPress={onPress}
@@ -65,6 +71,7 @@ function Botao({
 
 export default function InicioScreen({
   nomeUsuario,
+  fotoUsuario,
   estadoPessoas = { status: "indisponivel" },
   estadoAlertas = { status: "indisponivel" },
   demonstracao = false,
@@ -78,6 +85,17 @@ export default function InicioScreen({
   onAbrirMinhasSolicitacoes,
   onAbrirSolicitacoesRecebidas,
 }: InicioScreenProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
+  const [fotoFalhou, setFotoFalhou] = useState(false);
+
+useEffect(() => {
+  setFotoFalhou(false);
+}, [fotoUsuario]);
+
+const uriFoto = fotoUsuario?.trim() || null;
+
   const nome = nomeUsuario?.trim();
   const primeiroNome = nome?.split(/\s+/)[0];
 
@@ -177,16 +195,29 @@ export default function InicioScreen({
           </View>
 
           <Pressable
-            onPress={onAbrirPerfil}
-            accessibilityRole="button"
-            accessibilityLabel="Abrir meu perfil"
-            style={({ pressed }) => [
-              styles.avatar,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.avatarText}>{iniciais}</Text>
-          </Pressable>
+  onPress={onAbrirPerfil}
+  accessibilityRole="button"
+  accessibilityLabel="Abrir meu perfil"
+  style={({ pressed }) => [
+    styles.avatar,
+    pressed && styles.pressed,
+  ]}
+>
+  {uriFoto && !fotoFalhou ? (
+    <Image
+      key={uriFoto}
+      source={{ uri: uriFoto }}
+      style={styles.avatarImage}
+      resizeMode="cover"
+      onError={() => setFotoFalhou(true)}
+      accessible={false}
+    />
+  ) : (
+    <Text style={styles.avatarText}>
+      {iniciais}
+    </Text>
+  )}
+</Pressable>
         </View>
 
         <View style={styles.greeting}>
@@ -335,7 +366,7 @@ export default function InicioScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -386,14 +417,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.primary,
     marginTop: 2,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primaryLight,
-    alignItems: "center",
-    justifyContent: "center",
   },
   avatarText: {
     fontSize: 14,
@@ -519,7 +542,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   secondaryButtonText: {
     color: colors.primary,
@@ -527,4 +550,17 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7,
   },
-});
+  avatar: {
+  width: 48,
+  height: 48,
+  borderRadius: 24,
+  overflow: "hidden",
+  backgroundColor: colors.primaryLight,
+  alignItems: "center",
+  justifyContent: "center",
+},
+avatarImage: {
+  width: "100%",
+  height: "100%",
+},
+}));

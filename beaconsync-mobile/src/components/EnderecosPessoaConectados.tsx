@@ -32,7 +32,7 @@ import {
   validarNovoEndereco,
 } from "../services/enderecosPessoa";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 import type {
   EnderecoApi,
@@ -60,6 +60,9 @@ export default function EnderecosPessoaConectados({
   nomePessoa,
   onFechar,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const consulta = useEnderecosPessoa(pessoaId);
 
   const {
@@ -474,7 +477,7 @@ export default function EnderecosPessoaConectados({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -553,7 +556,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
     textAlign: "center",
   },
   secondary: {
@@ -567,4 +570,4 @@ const styles = StyleSheet.create({
   dimmed: {
     opacity: 0.6,
   },
-});
+}));

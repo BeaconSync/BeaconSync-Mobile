@@ -22,7 +22,7 @@ import {
   useSolicitarVinculo,
 } from "../hooks/useSolicitarVinculo";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 import type {
   EnviarSolicitacaoVinculo,
@@ -43,6 +43,9 @@ export default function SolicitarVinculoScreen({
   onConcluido,
   onSolicitar,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const {
     vinculo,
     enviando,
@@ -174,7 +177,7 @@ function fechar() {
                 </View>
 
                 <Text style={styles.title}>
-                  Já existe um cadastro
+                  Solicitar acesso ao cadastro
                 </Text>
 
                 <Text style={styles.description}>
@@ -280,7 +283,7 @@ function fechar() {
                 >
                   {enviando && (
                     <ActivityIndicator
-                      color={colors.surface}
+                      color={colors.onPrimary}
                     />
                   )}
 
@@ -314,7 +317,7 @@ function fechar() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -483,12 +486,12 @@ const styles = StyleSheet.create({
   errorBox: {
     padding: 16,
     borderRadius: 14,
-    backgroundColor: "#FBEDEB",
+    backgroundColor: colors.dangerBackground,
   },
   errorText: {
     fontSize: 14,
     lineHeight: 21,
-    color: "#AD3028",
+    color: colors.danger,
   },
   primaryButton: {
     minHeight: 52,
@@ -504,7 +507,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   secondaryButton: {
     minHeight: 48,
@@ -523,4 +526,4 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
-});
+}));

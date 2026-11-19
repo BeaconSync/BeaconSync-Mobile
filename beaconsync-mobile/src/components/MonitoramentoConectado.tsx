@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 
+import MapaDistritosAlerta from "./MapaDistritosAlerta";
 import { useConsultaMonitoramento } from "../hooks/useConsultaMonitoramento";
 import { consultarAlertas } from "../services/alertas";
 
@@ -17,7 +18,7 @@ import {
   type CorDistrito,
 } from "../services/mapaAlerta";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 const faixas: Record<
   CorDistrito,
@@ -42,6 +43,9 @@ const faixas: Record<
 };
 
 export default function MonitoramentoConectado() {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const [alertaId, setAlertaId] =
     useState<string | null>(null);
 
@@ -148,6 +152,9 @@ function DistritosDoAlerta({
   id: string;
   onVoltar: () => void;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const consultar = useCallback(
     () => consultarMapaAlerta(id),
     [id]
@@ -224,10 +231,10 @@ function DistritosDoAlerta({
             nem confirmam segurança.
           </Text>
 
-          <Text style={styles.text}>
-            A visualização geográfica ainda não está
-            disponível para estes dados.
-          </Text>
+          <MapaDistritosAlerta
+  key={estado.dados.alertaId}
+  mapa={estado.dados}
+/>
 
           {estado.dados.distritos.length === 0 && (
             <Text style={styles.text}>
@@ -295,6 +302,9 @@ function Botao({
   texto: string;
   onPress: () => void;
 }) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   return (
     <Pressable
       onPress={onPress}
@@ -309,7 +319,7 @@ function Botao({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 32,
@@ -368,4 +378,4 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7,
   },
-});
+}));

@@ -6,7 +6,7 @@ import {
   View,
 } from "react-native";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type {
   EstadoPessoasRelacionadas,
   PessoaRelacionadaAlerta,
@@ -52,6 +52,9 @@ export default function PessoasDoAlerta({
   estado = { status: "indisponivel" },
   onAbrirPessoa,
 }: Props) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   let mensagem = "";
 
 if (estado.status === "indisponivel") {
@@ -140,7 +143,7 @@ if (estado.status === "indisponivel") {
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   section: {
     gap: 12,
     marginBottom: 24,
@@ -194,10 +197,10 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
     textAlign: "center",
   },
   pressed: {
     opacity: 0.7,
   },
-});
+}));

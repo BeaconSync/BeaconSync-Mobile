@@ -14,7 +14,7 @@ import {
 
 import MapView, { Polygon } from "react-native-maps";
 
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 import type { MapaBairrosProps } from "../types/monitoramento";
 
 export default function MapaBairros({
@@ -22,6 +22,9 @@ export default function MapaBairros({
   selecionadoId,
   onSelecionar,
 }: MapaBairrosProps) {
+  const { colors, tema } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const mapa = useRef<ComponentRef<typeof MapView>>(null);
 
   const [pronto, setPronto] = useState(false);
@@ -82,7 +85,7 @@ export default function MapaBairros({
 
   return (
     <View style={styles.container}>
-      <MapView
+      <MapView userInterfaceStyle={tema === "escuro" ? "dark" : "light"}
         ref={mapa}
         style={styles.mapa}
         onMapReady={() => setPronto(true)}
@@ -107,7 +110,7 @@ export default function MapaBairros({
               fillColor={`${bairro.cor}99`}
               strokeColor={
                 bairro.id === selecionadoId
-                  ? "#242424"
+                  ? colors.text
                   : bairro.cor
               }
               strokeWidth={
@@ -123,7 +126,7 @@ export default function MapaBairros({
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   mapa: {
     width: "100%",
     height: "100%",
@@ -146,4 +149,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
   },
-});
+}));

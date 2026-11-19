@@ -1,6 +1,5 @@
 import { useRouter } from "expo-router";
 import { ArrowLeft, ArrowRight, Link2, ShieldCheck } from "lucide-react-native";
-import { entrarDemonstracao } from "../services/sessao";
 import {
   ActivityIndicator,
   Alert,
@@ -20,9 +19,10 @@ import {
   useAcessoForm,
   type AcoesAcesso,
 } from "../hooks/useAcessoForm";
-import { colors } from "../theme/colors";
+import { useTema, usarEstilosTema, type Cores } from "../theme/tema";
 
 type TelaAcessoProps = AcoesAcesso & {
+  renderizarVoluntariado?: (enviando: boolean) => ReactNode;
   modo: "login" | "cadastro";
   bloqueado?: boolean;
   renderizarCadastro?: (enviando: boolean) => ReactNode;
@@ -35,8 +35,12 @@ export default function TelaAcesso({
   onCadastro,
   bloqueado = false,
   renderizarCadastro,
+  renderizarVoluntariado,
   onCadastroConcluido,
 }: TelaAcessoProps) {
+  const { colors } = useTema();
+  const styles = usarEstilosTema(criarStyles, colors);
+
   const router = useRouter();
   const cadastro = modo === "cadastro";
 
@@ -321,6 +325,10 @@ async function confirmar() {
   </>
 )}
 
+{cadastro &&
+  dados.papel === "VOLUNTARIO" &&
+  renderizarVoluntariado?.(enviando)}
+
           <CampoFormulario
             label="E-mail"
             value={dados.email}
@@ -396,9 +404,9 @@ async function confirmar() {
             ]}
           >
             {enviando ? (
-              <ActivityIndicator color={colors.surface} />
+              <ActivityIndicator color={colors.onPrimary} />
             ) : (
-              <ArrowRight size={20} color={colors.surface} />
+              <ArrowRight size={20} color={colors.onPrimary} />
             )}
 
             <Text style={styles.primaryText}>
@@ -410,22 +418,6 @@ async function confirmar() {
             </Text>
           </Pressable>
         </View>
-
-{__DEV__ && !cadastro && (
-  <Pressable
-    onPress={() => {
-      Keyboard.dismiss();
-      entrarDemonstracao();
-    }}
-    disabled={enviando}
-    accessibilityRole="button"
-    style={styles.testButton}
-  >
-    <Text style={styles.linkText}>
-      Acessar modo de teste
-    </Text>
-  </Pressable>
-)}
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
@@ -460,7 +452,7 @@ async function confirmar() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarStyles = (colors: Cores) => (StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -562,7 +554,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 16,
     fontWeight: "600",
-    color: colors.surface,
+    color: colors.onPrimary,
     textAlign: "center",
   },
   dimmed: {
@@ -613,4 +605,4 @@ const styles = StyleSheet.create({
   borderRadius: 14,
   marginBottom: 16,
   },
-});
+}));
