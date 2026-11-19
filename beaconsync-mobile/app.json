@@ -17,7 +17,6 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      
       "predictiveBackGestureEnabled": false,
       "package": "com.beaconsync.mobile",
       "versionCode": 1
@@ -37,16 +36,30 @@
         }
       ],
       [
-  "react-native-maps",
-  {
-    "androidGoogleMapsApiKey": "SUA_CHAVE_GOOGLE_MAPS"
-  }
-],
+        "react-native-maps",
+        {
+          "androidGoogleMapsApiKey": "SUA_CHAVE_GOOGLE_MAPS"
+        }
+      ],
       "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "sobre": {
+        "commit": "869361fe0cdf307057a03f27746408f8848e1689"
+      },
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "b62a706a-2ebd-49c8-88d5-b924371b976e"
+      }
+    },
+    "owner": "jppcamilo"
   }
 }
