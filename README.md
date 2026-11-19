@@ -10,9 +10,7 @@ Projeto acadêmico desenvolvido no curso de Análise e Desenvolvimento de Sistem
 
 Apresentação do BeaconSync e dos principais fluxos do aplicativo.
 
-**Link do vídeo:** COLE_AQUI_O_LINK_DO_VIDEO
-
-<!-- Substitua COLE_AQUI_O_LINK_DO_VIDEO pela URL do vídeo no YouTube ou em outra plataforma acessível aos avaliadores. -->
+**Link do vídeo:** [VIDEO](https://youtu.be/BxVTSpUBgOs)
 
 ## Funcionalidades
 
